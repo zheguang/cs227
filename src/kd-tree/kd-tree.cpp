@@ -4,44 +4,6 @@
 #include "../HybridMemory.hpp"
 using namespace hmindex;
 
-void swap_tuples_in_points(vector<tuple_t>& points, int i1, int i2) {
-	tuple_t tmp = points[i1];
-	points[i1] = points[i2];
-	points[i2] = tmp;
-}
-
-// Return the index of median of points[lbd:rbd+1] using quick find by
-// axis-th coordinates of each point
-int quickfind_tuples_by_axis(
-		vector<tuple_t>& points, int lbd, int& rbd, unsigned int axis, int right_median) {
-	if (lbd == rbd) return lbd;
-	tuple_t pivot = points[lbd];
-	int i = lbd+1;
-	for (int j = lbd+1; j <= rbd; j++) {
-		tuple_t compare = points[j];
-		if (compare.size() <= axis) {
-			// Tuple compare is a invalid tuple as it doesn't have axis-th coordinate,
-			// swap to the end, shrink valid tuples range
-			swap_tuples_in_points(points, j, rbd);
-			rbd--;
-		} 
-		if (compare[axis] < pivot[axis]) {
-			swap_tuples_in_points(points, i, j);
-			i++;
-		}
-	}
-	i--;
-	swap_tuples_in_points(points, lbd, i);
-	if (right_median == i - lbd) {
-		return i;
-	}
-	if (right_median < i - lbd) {
-		int new_rbd = i-1;
-	 	return quickfind_tuples_by_axis(points, lbd, new_rbd, axis, right_median);
-	}
- 	return quickfind_tuples_by_axis(points, i+1, rbd, axis, right_median-(i-lbd+1));	
-}
-
 /* Methods for kd-tree */
 void tree_t::buildfrom(vector<tuple_t>& points) {
 	int height = 0;
@@ -91,8 +53,13 @@ void tree_t::display() {
 void tree_t::display_helper(node_t* node, string label) {
 	if (node == NULL) return;
 	cout << string(2*node->depth, ' ') << label;
-	cout << tuple_string(node->value) << " :" << node;
-	cout << " -> " << node->parent << "\n";
+	cout << tuple_string(node->value);
+	// Debug statement
+	if (KD_DEBUG) {
+		cout <<" :" << node;
+		cout << " -> " << node->parent;
+	}
+	cout << "\n";
 	display_helper(node->left, "L: ");
 	display_helper(node->right, "R: ");
 }

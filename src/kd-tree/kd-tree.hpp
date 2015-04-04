@@ -1,35 +1,9 @@
 #include <iostream>
-#include <sstream>
-#include <cmath>
 #include <string>
-#include <vector>
-#include <unordered_set>
+#include "tuple.hpp"
 using std::cout;
-using std::string;
-using std::vector;
-using std::ostringstream;
 
-typedef vector<float> tuple_t;
-
-// Print a tuple_t
-inline string tuple_string(tuple_t t) {
-	ostringstream buf;
-	buf << "(";
-	for (unsigned int i = 0; i < t.size(); i++) {
-		buf << t[i] << " ";
-	} buf << ")";
-	return buf.str();
-}
-
-// calculate norm2 distance between two points
-inline float distance(tuple_t& t1, tuple_t& t2) {
-	if (t1.size() != t2.size()) return -float(1);
-	float ret = 0.0;
-	for (unsigned int i = 0; i < t1.size(); i++) {
-		ret += (t1[i] - t2[i]) * (t1[i] - t2[i]);
-	}
-	return pow(ret, 0.5);
-}
+const int KD_DEBUG = false;
 
 // Node of kd-tree
 struct node_t {
