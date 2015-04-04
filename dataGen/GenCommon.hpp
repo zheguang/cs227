@@ -48,6 +48,7 @@ namespace hmindex {
     }
 
     dataFile.close();
+    free(dataBlock);
   }
 
 }
