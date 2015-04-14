@@ -46,12 +46,16 @@ int main() {
 	int num_points = 50;
 	int num_trials = 20;
 	int base = 200;
+	config_t config(
+			dimension, 
+			BY_HEIGHT_FROM_BOTTOM,
+			bottomheight(num_points)/2);
 	tuple_t target(dimension);
 	node_t* nearest = NULL;
 
 	// Just test a normal BST
 	printf("Test for single dimension\n");
-	tree_t bst(dimension, 2);
+	tree_t bst(config);
 	vector<tuple_t> numbers = generate_tuples(dimension, num_points); 
 	bst.buildfrom(numbers);
 	if (KD_DEBUG) {
@@ -65,9 +69,13 @@ int main() {
 	}
 
 	printf("Test for multi dimension\n");
-	for (dimension = 2; dimension < 10; dimension++) { // Test on points on R^n
+	config.policy = BY_PERCENTILE;
+	// Test on points on R^n
+	for (dimension = 2; dimension < 10; dimension++) {
 		target.resize(dimension);
-		tree_t kdtree(dimension);
+		config.dimension = dimension;
+		config.value = float(rand() % 10) / 10;
+		tree_t kdtree(config);
 		vector<tuple_t> points = generate_tuples(dimension, num_points); 
 		kdtree.buildfrom(points);
 		if (KD_DEBUG) {

@@ -10,11 +10,17 @@ HybridMemory.o: $(srcDir)/HybridMemory.cpp $(srcDir)/HybridMemory.hpp $(srcDir)/
 tuple.o: tuple.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# For canonical kd-tree
 kd-tree.o: kd-tree.cpp
 	$(CC) $(CFLAGS) -c kd-tree.cpp
 
-all: kd-tree.o HybridMemory.o tuple.o
-	$(CC) $(CFLAGS) -o main tuple.o kd-tree.o HybridMemory.o main.cpp $(LDLIBS)
+kd: kd-tree.o HybridMemory.o tuple.o
+	$(CC) $(CFLAGS) -o test_kd tuple.o kd-tree.o HybridMemory.o test_kd.cpp $(LDLIBS)
+
+
+# For Cache sensitive kd-tree
+#kd: cs-kd-tree.o HybridMemory.o tuple.o
+#	$(CC) $(CFLAGS) -o test_cskd tuple.o cs-kd-tree.o HybridMemory.o test_cskd.cpp $(LDLIBS)
 
 clean: 
-	rm *.o main 
+	rm *.o test_kd 
