@@ -11,8 +11,9 @@ void tree_t::check_config(int num_points) {
 			nvm_level = config.value;
 			break;
 		case BY_PERCENTILE:
-			memory_depth = int(float(bottomheight(num_points)) *
-									 (1.0 - config.value));
+			int num_inmemory_nodes = int(num_points * (1.0 - config.value));
+			int memory_depth = bottomheight(num_inmemory_nodes, config.fanout);
+			cout << memory_depth << " depth of nodes will be in memory\n";
 			break;
 	} // Switch
 }
@@ -38,15 +39,17 @@ node_t* tree_t::buildfrom_helper(
 		vector<tuple_t>& points,
 		int lbd, int rbd, int depth, node_t* parent) const {
 	if (lbd > rbd) return NULL;
-	int axis = depth % config.dimension;
+//	int axis = depth % config.dimension;
 	int right_median = (rbd - lbd + 1) / 2;
 	if ((rbd - lbd + 1) % 2 == 0) right_median--;
-	int median_idx = quickfind_tuples_by_axis(
-			points, lbd, rbd, axis, right_median);
+//	int median_idx = quickfind_tuples_by_axis(
+//			points, lbd, rbd, axis, right_median);
+
+	int median_idx = (rbd + lbd) / 2;
 
 	// Determine where node resides base on node height from leaves
 	node_t* newnode = NULL;
-	int height = bottomheight(rbd - lbd + 1);
+	int height = bottomheight(rbd - lbd + 1, config.fanout);
 	if (inMemory(height, depth)) {
 		newnode = (node_t*)HybridMemory::alloc(
 				sizeof(node_t), HybridMemory::DRAM);
@@ -109,7 +112,7 @@ node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	if (starter == NULL) return NULL;
 	node_t* cur_best = find_parent(starter, target);
-	float cur_dist = distance(cur_best->value, target);
+	double cur_dist = distance(cur_best->value, target);
 	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
 																								 cur_best->right;
 	if (left_branch != NULL) {

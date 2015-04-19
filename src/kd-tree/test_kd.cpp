@@ -1,4 +1,5 @@
 // @xl242
+#include <ctime>
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
@@ -9,7 +10,7 @@ tuple_t generate_tuple(int dimension, int base) {
 	tuple_t t(dimension);
 	for (int i = 0; i < dimension; i++) {
 		int b = rand() % base + 10;
-		t[i] = float(rand() % b);
+		t[i] = double(rand() % b);
 	}
 	return t;
 }
@@ -23,17 +24,14 @@ vector<tuple_t> generate_tuples(int dimension, int size) {
 }
 
 bool is_nearest(vector<tuple_t>& points, tuple_t& target, tuple_t& nearest) {
-	float shortest_d = distance(target, nearest);
+	double shortest_d = distance(target, nearest);
 	for (unsigned int i = 0; i < points.size(); i++) {
-		float d = distance(points[i], target);
+		double d = distance(points[i], target);
 		if (d < shortest_d) {
 			if (KD_DEBUG) {
-				cout << "err found for " << tuple_string(target) << "\n";
-				cout << "found " << tuple_string(nearest);
-				cout << " with distance " << shortest_d << "\n";
-				cout << "got nearer one " << tuple_string(points[i]);
-				cout << " of d = " << d;
-				cout << "\n";
+				cout << "err nns for " << tuple_string(target);
+				cout << "Got " << tuple_string(nearest) << " (" << shortest_d << "), ";
+				cout << "Found " << tuple_string(points[i]) << " (" << d << ").\n";
 			}
 			return false;
 		}
@@ -41,40 +39,61 @@ bool is_nearest(vector<tuple_t>& points, tuple_t& target, tuple_t& nearest) {
 	return true;
 }
 
-int main() {
+void testSingleDimension() {
+	cout << "Test for single dimension\n";
 	int dimension = 1;
-	int num_points = 50;
-	int num_trials = 20;
-	int base = 200;
+	int fanout = 2; // XXX fanout must be 2 at this point!!!
+	int num_trials = 1000000;
+	vector<tuple_t> points = createTuplesFromFile(
+		"../../dataGen/test-1MB.dat", dimension); 
 	config_t config(
 			dimension, 
-			BY_HEIGHT_FROM_BOTTOM,
-			bottomheight(num_points)/2);
+			BY_PERCENTILE,
+			0.5, // Let half of the tree in memory
+			fanout);
 	tuple_t target(dimension);
-	node_t* nearest = NULL;
-
-	// Just test a normal BST
-	printf("Test for single dimension\n");
 	tree_t bst(config);
-	vector<tuple_t> numbers = generate_tuples(dimension, num_points); 
-	bst.buildfrom(numbers);
+		
+	time_t tstart = time(0);
+	bst.buildfrom(points);
+	time_t tend = time(0);
+	cout << "finished building the tree. Used " << difftime(tend, tstart) << "s\n";
 	if (KD_DEBUG) {
 		bst.display();
 	}
 	// Test knn search
+	node_t* nearest = NULL;
+	cout << "start nns...\n";
+	tstart = time(0);
 	for (int i = 0; i < num_trials; i++) {
-		target = generate_tuple(dimension, base);
+		target = generate_tuple(dimension, 100000);
 		nearest = bst.search_nearest(target);
-		assert(is_nearest(numbers, target, nearest->value));
+		assert(is_nearest(points, target, nearest->value));
 	}
+	tend = time(0);
+	cout << "finished nns " << difftime(tend, tstart) << "s\n";
+}
 
-	printf("Test for multi dimension\n");
-	config.policy = BY_PERCENTILE;
-	// Test on points on R^n
+
+void testMultipleDimension() {
+	cout << "Lets test multiple dimension kd\n";
+	int dimension = 1;
+	int fanout = 2; // XXX fanout must be 2 at this point!!!
+	int num_trials = 20;
+	int num_points = 100;
+	int base = 200;
+	config_t config(
+			dimension, 
+			BY_PERCENTILE,
+			0.5, // Let half of the tree in memory
+			fanout);
+	tuple_t target;
+	node_t* nearest = NULL;
+
 	for (dimension = 2; dimension < 10; dimension++) {
 		target.resize(dimension);
 		config.dimension = dimension;
-		config.value = float(rand() % 10) / 10;
+		config.value = double(rand() % 10) / 10;
 		tree_t kdtree(config);
 		vector<tuple_t> points = generate_tuples(dimension, num_points); 
 		kdtree.buildfrom(points);
@@ -88,7 +107,12 @@ int main() {
 			}
 			nearest = kdtree.search_nearest(target);
 			assert(is_nearest(points, target, nearest->value));
-		}/**/
+		}
 	}
+}
+
+
+int main() {
+	testSingleDimension();
 	return 0;
 }

@@ -1,6 +1,14 @@
+#include <iostream>
+#include <fstream>
 #include <vector>
 #include "tuple.hpp"
+#include "../../dataGen/DataDef.hpp"
+
+using std::cerr;
+using std::cout;
 using std::vector;
+using std::ifstream;
+using namespace hmindex;
 
 string tuple_string(tuple_t t) {
 	ostringstream buf;
@@ -11,9 +19,9 @@ string tuple_string(tuple_t t) {
 	return buf.str();
 }
 
-float distance(tuple_t& t1, tuple_t& t2) {
-	if (t1.size() != t2.size()) return -float(1);
-	float ret = 0.0;
+double distance(tuple_t& t1, tuple_t& t2) {
+	if (t1.size() != t2.size()) return -double(1);
+	double ret = 0.0;
 	for (unsigned int i = 0; i < t1.size(); i++) {
 		ret += (t1[i] - t2[i]) * (t1[i] - t2[i]);
 	}
@@ -21,7 +29,8 @@ float distance(tuple_t& t1, tuple_t& t2) {
 }
 
 int quickfind_tuples_by_axis(
-		vector<tuple_t>& points, int lbd, int& rbd, unsigned int axis, int right_median) {
+		vector<tuple_t>& points, int lbd, int& rbd,
+		unsigned int axis, int right_median) {
 	if (lbd == rbd) return lbd;
 	tuple_t pivot = points[lbd];
 	int i = lbd+1;
@@ -49,4 +58,43 @@ int quickfind_tuples_by_axis(
 	}
  	return quickfind_tuples_by_axis(points, i+1, rbd, axis, right_median-(i-lbd+1));	
 }
+
+vector<tuple_t> createTuplesFromFile(
+	const string& dataFilePath, int dimension) {
+	ifstream dataFile(dataFilePath);
+	if (!dataFile.is_open()) {
+		cerr << "Unable to print data file: " << dataFilePath << "\n";
+		throw -1;
+	}
+
+	dataFile.seekg(0, std::ios_base::end);
+	size_t dataSize = dataFile.tellg();
+	cout << "{ DataFileSize: " << dataSize
+			 << "B, tupleSize: " << getTupleSize() << " }\n";
+	dataFile.seekg(0);
+
+	char* dataBlock = static_cast<char*>(malloc(dataSize));
+	dataFile.read(dataBlock, dataSize);
+
+	vector<tuple_t> ret;
+	tuple_t tuple;
+	int d = 0;
+	for (size_t i = 0; i < dataSize; i += getTupleSize()) {
+		// TODO add random base, or salt?
+		Tuple* f = reinterpret_cast<Tuple*>(dataBlock + i);
+		double data = double(f->key);
+		tuple.push_back(data);
+		d++;
+		if (d == dimension) {
+//			cout << tuple_string(tuple) << "\n";
+			ret.push_back(tuple);
+			tuple.clear();
+			d = 0;
+		}
+	}
+	dataFile.close();
+	free(dataBlock);
+	return ret;
+}
+
 

@@ -6,13 +6,13 @@ using std::string;
 using std::vector;
 using std::ostringstream;
 
-typedef vector<float> tuple_t;
+typedef vector<double> tuple_t;
 
 // Print a tuple_t
 string tuple_string(tuple_t t);
 
 // calculate norm2 distance between two points
-float distance(tuple_t& t1, tuple_t& t2);
+double distance(tuple_t& t1, tuple_t& t2);
 
 // Swap position of two tuples in the list
 inline void swap_tuples_in_points(vector<tuple_t>& points, int i1, int i2) {
@@ -26,3 +26,7 @@ inline void swap_tuples_in_points(vector<tuple_t>& points, int i1, int i2) {
 int quickfind_tuples_by_axis(
 		vector<tuple_t>& points,
 	  int lbd, int& rbd, unsigned int axis, int right_median);
+
+// Create a list of tuple from .dat file created by dataGen
+vector<tuple_t> createTuplesFromFile(
+	const string& dataFilePath, int dimension);

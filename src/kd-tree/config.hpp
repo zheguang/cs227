@@ -9,9 +9,9 @@ enum policy_t {
 struct config_t {
 	int dimension;
 	policy_t policy;
-	float value;
+	double value;
 	int fanout;
-	config_t(int d, policy_t p, float v, int f=2):
+	config_t(int d, policy_t p, double v, int f=2):
 			dimension(d),
 			policy(p),
 			value(v),
@@ -19,9 +19,10 @@ struct config_t {
 };
 
 
-// Suppose fanout is still 2
-inline int bottomheight(int N) {
-	return int(log2(N) + 1);
+inline int bottomheight(int N, int fanout) {
+	double Nf = double(N);
+	double fanoutf = double(fanout);
+	return int(1.0 + (log(Nf) / log(fanoutf)));
 }
 
 
