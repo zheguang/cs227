@@ -4,6 +4,8 @@
 #include "../HybridMemory.hpp"
 using namespace hmindex;
 
+//TODO a deconstructor to free all memory allocated in NVM
+
 /* Methods for kd-tree */
 void tree_t::check_config(int num_points) {
 	switch (config.policy) {
@@ -11,8 +13,12 @@ void tree_t::check_config(int num_points) {
 			nvm_level = config.value;
 			break;
 		case BY_PERCENTILE:
+			cout << num_points << " points in total\n";
 			int num_inmemory_nodes = int(num_points * (1.0 - config.value));
-			int memory_depth = bottomheight(num_inmemory_nodes, config.fanout);
+			int memory_depth = 0;
+			if (num_inmemory_nodes != 0) {
+				memory_depth = bottomheight(num_inmemory_nodes, config.fanout);
+			}
 			cout << memory_depth << " depth of nodes will be in memory\n";
 			break;
 	} // Switch
