@@ -81,39 +81,34 @@ void testSingleDimension(string pathname) {
 }
 
 
-void testMultipleDimension() {
+void testMultipleDimension(string pathname) {
 	cout << "Lets test multiple dimension kd\n";
-	int dimension = 1;
+	int dimension = 3;
 	int fanout = 2; // XXX fanout must be 2 at this point!!!
 	int num_trials = 20;
-	int num_points = 100;
 	int base = 200;
 	config_t config(
 			dimension, 
 			BY_PERCENTILE,
 			0.5, // Let half of the tree in memory
 			fanout);
+	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
 	tuple_t target;
+	target.resize(dimension);
 	node_t* nearest = NULL;
 
-	for (dimension = 2; dimension < 10; dimension++) {
-		target.resize(dimension);
-		config.dimension = dimension;
-		config.value = double(rand() % 10) / 10;
-		tree_t kdtree(config);
-		vector<tuple_t> points = generate_tuples(dimension, num_points); 
-		kdtree.buildfrom(points);
+	tree_t kdtree(config);
+	kdtree.buildfrom(points);
+	if (KD_DEBUG) {
+		kdtree.display();
+	}
+	for (int i = 0; i < num_trials; i++) {
+		target = generate_tuple(dimension, base);		
 		if (KD_DEBUG) {
-			kdtree.display();
+			cout << tuple_string(target) << " " << i << "\n";
 		}
-		for (int i = 0; i < num_trials; i++) {
-			target = generate_tuple(dimension, base);		
-			if (KD_DEBUG) {
-				cout << tuple_string(target) << " " << i << "\n";
-			}
-			nearest = kdtree.search_nearest(target);
-			assert(is_nearest(points, target, nearest->value));
-		}
+		nearest = kdtree.search_nearest(target);
+		assert(is_nearest(points, target, nearest->value));
 	}
 }
 
@@ -126,5 +121,6 @@ int main(int argc, char** argv) {
 	string filename(argv[1]);
 	cout << "build tree from " << filename << "\n";
 	testSingleDimension(filename);
+	testMultipleDimension(filename);
 	return 0;
 }

@@ -1,3 +1,7 @@
+// @xl242
+#ifndef KD_CONFIG_H_
+#define KD_CONFIG_H_
+
 #include <cstdlib>
 #include <cmath>
 
@@ -24,5 +28,4 @@ inline int bottomheight(int N, int fanout) {
 	double fanoutf = double(fanout);
 	return int(1.0 + (log(Nf) / log(fanoutf)));
 }
-
-
+#endif

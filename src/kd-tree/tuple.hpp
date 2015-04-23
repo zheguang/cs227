@@ -1,3 +1,7 @@
+// @xl242
+#ifndef KD_TUPLE_H_
+#define KD_TUPLE_H_
+
 #include <sstream>
 #include <cmath>
 #include <string>
@@ -30,3 +34,4 @@ int quickfind_tuples_by_axis(
 // Create a list of tuple from .dat file created by dataGen
 vector<tuple_t> createTuplesFromFile(
 	const string& dataFilePath, int dimension);
+#endif

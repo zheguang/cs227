@@ -1,3 +1,7 @@
+// @xl242
+#ifndef KD_TREE_H_
+#define KD_TREE_H_
+
 #include <iostream>
 #include <string>
 #include "config.hpp"
@@ -75,3 +79,4 @@ private:
 	// Helper function for destructor
 	void free_tree_helper(node_t* node);
 };
+#endif
