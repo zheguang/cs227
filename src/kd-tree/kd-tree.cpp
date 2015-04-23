@@ -1,10 +1,9 @@
 // @xl242
+#include <assert.h>
 #include <cstdlib>
 #include <iostream>
 #include "kd-tree.hpp"
-#include "../HybridMemory.hpp"
 #include "../FatalError.hpp"
-using namespace hmindex;
 
 /* A deconstructor to free all memory allocated */
 tree_t::~tree_t() {
@@ -96,6 +95,19 @@ node_t* tree_t::buildfrom_helper(
 	return newnode;
 }
 
+
+void tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
+	bool is_left_child = false;
+	node_t* parent = find_parent(root, tuple, is_left_child);
+	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), type);
+	newnode->parent = parent;
+	if (is_left_child) {
+		parent->left = newnode;
+	} else {
+		parent->right = newnode;
+	}
+}
+
 void tree_t::display() const {
 	cout << "kd-tree: \n";
 	display_helper(root, "");
@@ -115,17 +127,24 @@ void tree_t::display_helper(node_t* node, string label) const {
 	display_helper(node->right, "R: ");
 }
 
-node_t* tree_t::find_parent(node_t* starter, tuple_t& target) const {
+node_t* tree_t::find_parent(
+		node_t* starter, tuple_t& target, bool& is_left_child) const {
 	if (starter == NULL) return NULL;
 	node_t* key = starter;
 	while (true) {
 		if (key->value == target) return key;
 		int axis = key->depth % config.dimension;
 		if (target[axis] < key->value[axis]) {
-			if (key->left == NULL) return key;
+			if (key->left == NULL) {
+				is_left_child = true;
+				return key;
+			}
 			key = key->left;
 		} else {
-			if (key->right == NULL) return key;
+			if (key->right == NULL) {
+				is_left_child = false;
+				return key;
+			}
 			key = key->right;
 		}
 	}
@@ -139,8 +158,17 @@ node_t* tree_t::search_nearest(tuple_t& target) const {
 node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	if (starter == NULL) return NULL;
-	node_t* cur_best = find_parent(starter, target);
+	bool is_left_child = false;
+	node_t* cur_best = find_parent(starter, target, is_left_child);
 	double cur_dist = distance(cur_best->value, target);
+	// A quick check
+	if (cur_best->left != NULL) {
+		assert(is_left_child == false);
+	}
+	if (cur_best->right != NULL) {
+		assert(is_left_child == true);
+	}
+	
 	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
 																								 cur_best->right;
 	if (left_branch != NULL) {

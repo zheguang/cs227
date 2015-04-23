@@ -6,7 +6,9 @@
 #include <string>
 #include "config.hpp"
 #include "tuple.hpp"
+#include "../HybridMemory.hpp"
 using std::cout;
+using namespace hmindex;
 
 const int KD_DEBUG = false;
 
@@ -21,7 +23,7 @@ struct node_t {
 };
 
 // Class for kd-tree
-// TODO parameters to add: input ranking, fanout, and what?
+// TODO generalize tree's fanout
 class tree_t {
 public:
 	node_t* root;
@@ -38,7 +40,7 @@ public:
 	void buildfrom(vector<tuple_t>& points);
 
 	// Insert new node into tree
-	void insert(node_t newnode);
+	void insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
 
   // Search nearest neighbor
 	node_t* search_nearest(tuple_t& target) const;
@@ -68,7 +70,8 @@ private:
 			int lbd, int rbd, int depth, node_t* parent) const;
 	
 	// Find parent of tuple if it to be inserted into tree rooted at starter
-	node_t* find_parent(node_t* starter, tuple_t& tuple) const;
+	node_t* find_parent(
+			node_t* starter, tuple_t& tuple, bool& is_left_child) const;
 	
 	// Helper function for display
 	void display_helper(node_t* node, string label) const;
