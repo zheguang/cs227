@@ -2,9 +2,30 @@
 #include <iostream>
 #include "kd-tree.hpp"
 #include "../HybridMemory.hpp"
+#include "../FatalError.hpp"
 using namespace hmindex;
 
-//TODO a deconstructor to free all memory allocated in NVM
+/* A deconstructor to free all memory allocated */
+tree_t::~tree_t() {
+	if (root == NULL) return;
+	free_tree_helper(root);
+}
+
+void tree_t::free_tree_helper(node_t* node) {
+	if (node->left != NULL) free_tree_helper(node->left);
+	if (node->right != NULL) free_tree_helper(node->right);
+	try{ 
+		HybridMemory::assertAddress(node, HybridMemory::DRAM);
+		HybridMemory::free(node, sizeof(node_t), HybridMemory::DRAM);
+	} catch (FatalError& err) {
+		try {
+			HybridMemory::assertAddress(node, HybridMemory::NVM);
+			HybridMemory::free(node, sizeof(node_t), HybridMemory::NVM);
+		} catch (FatalError& err) {
+			cout << "Encounter invalid memory type " << node << "\n";
+		}
+	} 
+}
 
 /* Methods for kd-tree */
 void tree_t::check_config(int num_points) {

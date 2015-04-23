@@ -28,6 +28,8 @@ public:
 			root(NULL), 
 			config(config) {}
 
+	~tree_t();
+
 	// Build a tree from a list of points, 
 	void buildfrom(vector<tuple_t>& points);
 
@@ -44,11 +46,16 @@ private:
 	// Configuration of the hybrid memory allocation
 	config_t config;
 	
+	// Level of tree nodes from leaves should be resides in NVM
 	int nvm_level = -1;
+	
+	// Depth of tree nodes from root should be resides in DRAM
 	int memory_depth = -1;
 
+	// Determine how to spread nodes across memory base
 	void check_config(int num_points);
 
+	// Check whether a node should be allocated in memory
 	bool inMemory(int h, int d) const;
 
 	// Helper function for buildfrom
@@ -56,11 +63,15 @@ private:
 			vector<tuple_t>& points,
 			int lbd, int rbd, int depth, node_t* parent) const;
 	
-	// Find parent node of tuple 
-	// if it were to be inserted into tree rooted at starter
+	// Find parent of tuple if it to be inserted into tree rooted at starter
 	node_t* find_parent(node_t* starter, tuple_t& tuple) const;
 	
+	// Helper function for display
 	void display_helper(node_t* node, string label) const;
  	
+	// Helper function for search_nearest
 	node_t* search_nearest_helper(node_t* starter, tuple_t& target) const;
+
+	// Helper function for destructor
+	void free_tree_helper(node_t* node);
 };
