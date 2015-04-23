@@ -6,7 +6,7 @@ using std::string;
 using std::vector;
 using std::ostringstream;
 
-typedef vector<double> tuple_t;
+typedef vector<long long> tuple_t;
 
 // Print a tuple_t
 string tuple_string(tuple_t t);
