@@ -15,7 +15,7 @@ namespace hmindex {
         NVM
       };
       static void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
-      static void free(void* start, size_t sz);
+      static void free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType);
       static void assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType);
 
     private:

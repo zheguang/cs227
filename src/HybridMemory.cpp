@@ -21,7 +21,7 @@ void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   return result;
 }
 
-void HybridMemory::free(void* start, size_t sz) {
+void HybridMemory::free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType __attribute__((unused))) {
   numa_free(start, sz); 
 }
 

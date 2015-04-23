@@ -45,7 +45,7 @@ void checkAllocationIn(HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
 
   for (int i = 0; i < NUM_BLOCKS; i++) {
     cerr << "[INFO] Free block " << i << " of size " << blockSizes[i] << "B in " << memoryNodeTypeNameOf(memoryNodeType) << "\n";
-    HybridMemory::free(blocks[i], blockSizes[i]);
+    HybridMemory::free(blocks[i], blockSizes[i], memoryNodeType);
   }
 }
 
