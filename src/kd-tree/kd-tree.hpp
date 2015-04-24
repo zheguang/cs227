@@ -42,6 +42,10 @@ public:
 	// Insert new node into tree
 	void insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
 
+
+	// Remove an existing node
+	void remove(node_t* node);
+
   // Search nearest neighbor
 	node_t* search_nearest(tuple_t& target) const;
 	
