@@ -97,9 +97,21 @@ node_t* tree_t::buildfrom_helper(
 
 
 void tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
+	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), type);
+	newnode->value = tuple;
+	newnode->left = NULL;
+	newnode->right = NULL;
+	newnode->parent = NULL;
+	if (root == NULL) {
+		root = newnode;
+		return;
+	}
 	bool is_left_child = false;
 	node_t* parent = find_parent(root, tuple, is_left_child);
-	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), type);
+	if (parent == NULL) {
+		cout << "bad\n";
+	}
+	
 	newnode->parent = parent;
 	if (is_left_child) {
 		parent->left = newnode;
@@ -158,17 +170,9 @@ node_t* tree_t::search_nearest(tuple_t& target) const {
 node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	if (starter == NULL) return NULL;
-	bool is_left_child = false;
+	bool is_left_child = true;
 	node_t* cur_best = find_parent(starter, target, is_left_child);
 	double cur_dist = distance(cur_best->value, target);
-	// A quick check
-	if (cur_best->left != NULL) {
-		assert(is_left_child == false);
-	}
-	if (cur_best->right != NULL) {
-		assert(is_left_child == true);
-	}
-	
 	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
 																								 cur_best->right;
 	if (left_branch != NULL) {

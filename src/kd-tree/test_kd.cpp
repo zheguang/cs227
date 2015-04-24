@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
+#include <stack>
 #include "kd-tree.hpp"
 
 /* A helper function for testing */
@@ -39,11 +40,50 @@ bool is_nearest(vector<tuple_t>& points, tuple_t& target, tuple_t& nearest) {
 	return true;
 }
 
+
+void experiment_randomnns(
+		tree_t* kdtree, vector<tuple_t>& points,
+		int num_trials, int randbase) {
+	node_t* nearest = NULL;
+	for (int i = 0; i < num_trials; i++) {
+		tuple_t target = generate_tuple(kdtree->get_dimension(), randbase);		
+		if (KD_DEBUG) {
+			cout << tuple_string(target) << " " << i << "\n";
+		}
+		nearest = kdtree->search_nearest(target);
+		assert(is_nearest(points, target, nearest->value));
+	}
+}
+
+
+void testInsertRemove() {
+	int num_points = 50;
+	int num_trials = 100;
+	int dimension = 10;
+	int base = 1000;
+	int fanout = 2;
+	config_t config(
+			dimension, 
+			BY_PERCENTILE,
+			1.0,
+			fanout);
+	tree_t kdtree(config);
+	vector<tuple_t> points;
+	for (int i = 0; i < num_points; i++) {
+		tuple_t tuple = generate_tuple(dimension, base);
+		points.push_back(tuple);
+		kdtree.insert(tuple, hmindex::HybridMemory::DRAM);
+	}
+	experiment_randomnns(&kdtree, points, num_trials, base); 
+}
+
+
 void testSingleDimension(string pathname) {
 	cout << "Test for single dimension\n";
 	int dimension = 1;
 	int fanout = 2; // XXX fanout must be 2 at this point!!!
 	int num_trials = 1;
+	int base = 2000;
 	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
 	config_t config(
 			dimension, 
@@ -52,27 +92,22 @@ void testSingleDimension(string pathname) {
 			fanout);
 	tuple_t target(dimension);
 	
-	double percentile = 0.95;
-	for (int k = 0; k < 1; k++) {
+	double percentile = 1.0;
+	while (percentile >= 0.0) {
 		config.value = percentile;
 		tree_t bst(config);
 		time_t tstart = time(0);
 		bst.buildfrom(points);
 		time_t tend = time(0);
-		cout << "finished building the tree. Used " << difftime(tend, tstart) << "s\n";
+		cout << "finished building the tree. Used ";
+		cout << difftime(tend, tstart) << "s\n";
 		if (KD_DEBUG) {
 			bst.display();
 		}
 		// Test knn search
-		node_t* nearest = NULL;
 		cout << "start nns...\n";
 		tstart = time(0);
-		for (int i = 0; i < num_trials; i++) {
-			// target = generate_tuple(dimension, 1);
-			target[0] = 1.0;
-			nearest = bst.search_nearest(target);
-			assert(is_nearest(points, target, nearest->value));
-		}
+		experiment_randomnns(&bst, points, num_trials, base);
 		tend = time(0);
 		cout << "finished nns of " << percentile << " ";
 		cout << "Used: "<< difftime(tend, tstart) << "s\n";
@@ -95,21 +130,13 @@ void testMultipleDimension(string pathname) {
 	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
 	tuple_t target;
 	target.resize(dimension);
-	node_t* nearest = NULL;
 
 	tree_t kdtree(config);
 	kdtree.buildfrom(points);
 	if (KD_DEBUG) {
 		kdtree.display();
 	}
-	for (int i = 0; i < num_trials; i++) {
-		target = generate_tuple(dimension, base);		
-		if (KD_DEBUG) {
-			cout << tuple_string(target) << " " << i << "\n";
-		}
-		nearest = kdtree.search_nearest(target);
-		assert(is_nearest(points, target, nearest->value));
-	}
+	experiment_randomnns(&kdtree, points, num_trials, base);
 }
 
 
@@ -120,7 +147,8 @@ int main(int argc, char** argv) {
 	}
 	string filename(argv[1]);
 	cout << "build tree from " << filename << "\n";
-	testSingleDimension(filename);
-	testMultipleDimension(filename);
+	testInsertRemove();
+//	testSingleDimension(filename);
+//	testMultipleDimension(filename);
 	return 0;
 }

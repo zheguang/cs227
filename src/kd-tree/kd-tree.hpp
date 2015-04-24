@@ -48,6 +48,9 @@ public:
 	// Print the kd-tree
 	void display() const; 
 
+	int get_dimension() const {
+		return config.dimension;
+	}
 private:
 	// Configuration of the hybrid memory allocation
 	config_t config;
@@ -81,5 +84,6 @@ private:
 
 	// Helper function for destructor
 	void free_tree_helper(node_t* node);
+
 };
 #endif

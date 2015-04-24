@@ -10,7 +10,8 @@ using std::string;
 using std::vector;
 using std::ostringstream;
 
-typedef vector<long long> tuple_t;
+typedef long long datatype_t;
+typedef vector<datatype_t> tuple_t;
 
 // Print a tuple_t
 string tuple_string(tuple_t t);
