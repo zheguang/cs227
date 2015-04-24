@@ -27,9 +27,6 @@ struct node_t {
 class tree_t {
 public:
 	node_t* root;
-	// Note, if one and only one of nvm_level and nvm_percentile
-	// should be passed as input. If both are given valid values,
-	// tree will use nvm_level
 	tree_t(config_t& config) : 
 			root(NULL), 
 			config(config) {}
@@ -41,7 +38,6 @@ public:
 
 	// Insert new node into tree
 	void insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
-
 
 	// Remove an existing node
 	void remove(node_t* node);
@@ -69,7 +65,7 @@ private:
 	void check_config(int num_points);
 
 	// Check whether a node should be allocated in memory
-	bool inMemory(int h, int d) const;
+	bool shouldbe_inmemory(int h, int d) const;
 
 	// Helper function for buildfrom
 	node_t* buildfrom_helper(
@@ -77,6 +73,7 @@ private:
 			int lbd, int rbd, int depth, node_t* parent) const;
 	
 	// Find parent of tuple if it to be inserted into tree rooted at starter
+	// is_left_child is true if tuple if inserted will be parent's left child
 	node_t* find_parent(
 			node_t* starter, tuple_t& tuple, bool& is_left_child) const;
 	
@@ -87,7 +84,11 @@ private:
 	node_t* search_nearest_helper(node_t* starter, tuple_t& target) const;
 
 	// Helper function for destructor
-	void free_tree_helper(node_t* node);
+	void free_tree_helper(node_t* start);
+	void free_node(node_t* node);
 
+	node_t* find_replacement(node_t* replaced) const;
+	node_t* find_largest(node_t* start, int comp_axis) const;
+	node_t* find_smallest(node_t* start, int comp_axis) const;
 };
 #endif

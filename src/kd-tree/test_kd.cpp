@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
 	string filename(argv[1]);
 	cout << "build tree from " << filename << "\n";
 	testInsertRemove();
-//	testSingleDimension(filename);
-//	testMultipleDimension(filename);
+	testSingleDimension(filename);
+	testMultipleDimension(filename);
 	return 0;
 }

@@ -11,9 +11,7 @@ tree_t::~tree_t() {
 	free_tree_helper(root);
 }
 
-void tree_t::free_tree_helper(node_t* node) {
-	if (node->left != NULL) free_tree_helper(node->left);
-	if (node->right != NULL) free_tree_helper(node->right);
+void tree_t::free_node(node_t* node) {
 	try{ 
 		HybridMemory::assertAddress(node, HybridMemory::DRAM);
 		HybridMemory::free(node, sizeof(node_t), HybridMemory::DRAM);
@@ -25,6 +23,12 @@ void tree_t::free_tree_helper(node_t* node) {
 			cout << "Encounter invalid memory type " << node << "\n";
 		}
 	} 
+}
+
+void tree_t::free_tree_helper(node_t* start) {
+	if (start->left != NULL) free_tree_helper(start->left);
+	if (start->right != NULL) free_tree_helper(start->right);
+	free_node(start);
 }
 
 /* Methods for kd-tree */
@@ -45,7 +49,7 @@ void tree_t::check_config(int num_points) {
 	} // Switch
 }
 
-bool tree_t::inMemory(int h, int d) const {
+bool tree_t::shouldbe_inmemory(int h, int d) const {
 	switch (config.policy) {
 		case BY_HEIGHT_FROM_BOTTOM:
 			return h > nvm_level;
@@ -77,7 +81,7 @@ node_t* tree_t::buildfrom_helper(
 	// Determine where node resides base on node height from leaves
 	node_t* newnode = NULL;
 	int height = bottomheight(rbd - lbd + 1, config.fanout);
-	if (inMemory(height, depth)) {
+	if (shouldbe_inmemory(height, depth)) {
 		newnode = (node_t*)HybridMemory::alloc(
 				sizeof(node_t), HybridMemory::DRAM);
 	} else {
@@ -111,7 +115,6 @@ void tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	if (parent == NULL) {
 		cout << "bad\n";
 	}
-	
 	newnode->parent = parent;
 	if (is_left_child) {
 		parent->left = newnode;
@@ -119,6 +122,23 @@ void tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 		parent->right = newnode;
 	}
 }
+
+void tree_t::remove(node_t* node) {
+	if (node == NULL) return;
+	if (node->left == NULL && node->right == NULL) {
+		if (node == node->parent->left) {
+			node->parent->left = NULL;
+		} else {
+			node->parent->right = NULL;
+		}
+		free_node(node);
+		return;
+	}
+	node_t* replacement = find_replacement(node);
+	node->value = replacement->value;
+	remove(replacement);
+}
+
 
 void tree_t::display() const {
 	cout << "kd-tree: \n";
@@ -161,6 +181,57 @@ node_t* tree_t::find_parent(
 		}
 	}
 	return NULL;
+}
+
+node_t* tree_t::find_replacement(node_t* replaced) const {
+	if (replaced == NULL) return NULL;
+	int axis = replaced->depth % config.dimension;
+	if (replaced->right != NULL) {
+		return find_smallest(replaced->right, axis);
+	}
+	if (replaced->left != NULL) {
+		return find_largest(replaced->left, axis);
+	}
+	// A leaf node
+	return replaced;
+}
+
+node_t* tree_t::find_largest(node_t* start, int comp_axis) const {
+	if (start == NULL) return start;
+	int axis = start->depth % config.dimension;
+	if (axis == comp_axis) {
+		if (start->right == NULL) return start;
+		return find_largest(start->right, comp_axis);
+	}
+	node_t* lc = find_largest(start->left, comp_axis);
+	node_t* rc = find_largest(start->right, comp_axis);
+	if (lc == NULL && rc == NULL) return start;
+	if (lc == NULL) return rc;
+	if (rc == NULL) return lc;
+	if (lc->value[comp_axis] >= rc->value[comp_axis]) {
+		return lc;
+	} else {
+		return rc;
+	}
+}
+
+node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
+	if (start == NULL) return start;
+	int axis = start->depth % config.dimension;
+	if (axis == comp_axis) {
+		if (start->left == NULL) return start;
+		return find_smallest(start->right, comp_axis);
+	}
+	node_t* lc = find_smallest(start->left, comp_axis);
+	node_t* rc = find_smallest(start->right, comp_axis);
+	if (lc == NULL && rc == NULL) return start;
+	if (lc == NULL) return rc;
+	if (rc == NULL) return lc;
+	if (lc->value[comp_axis] <= rc->value[comp_axis]) {
+		return lc;
+	} else {
+		return rc;
+	}
 }
 
 node_t* tree_t::search_nearest(tuple_t& target) const {
