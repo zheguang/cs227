@@ -5,100 +5,20 @@
 #include "kd-tree.hpp"
 #include "../FatalError.hpp"
 
+//===========================================================
+//    KDTREE PUBLIC FUNCTIONS
+//===========================================================
+
 /* A deconstructor to free all memory allocated */
 tree_t::~tree_t() {
 	if (root == NULL) return;
 	free_tree_helper(root);
 }
 
-void tree_t::free_node(node_t* node) {
-	try{ 
-		HybridMemory::assertAddress(node, HybridMemory::DRAM);
-		HybridMemory::free(node, sizeof(node_t), HybridMemory::DRAM);
-	} catch (FatalError& err) {
-		try {
-			HybridMemory::assertAddress(node, HybridMemory::NVM);
-			HybridMemory::free(node, sizeof(node_t), HybridMemory::NVM);
-		} catch (FatalError& err) {
-			cout << "Encounter invalid memory type " << node << "\n";
-		}
-	} 
-}
-
-void tree_t::free_tree_helper(node_t* start) {
-	if (start->left != NULL) free_tree_helper(start->left);
-	if (start->right != NULL) free_tree_helper(start->right);
-	free_node(start);
-}
-
-/* Methods for kd-tree */
-void tree_t::check_config(int num_points) {
-	switch (config.policy) {
-		case BY_HEIGHT_FROM_BOTTOM:
-			nvm_level = config.value;
-			break;
-		case BY_PERCENTILE:
-			cout << num_points << " points in total\n";
-			int num_inmemory_nodes = int(num_points * (1.0 - config.value));
-			int memory_depth = 0;
-			if (num_inmemory_nodes != 0) {
-				memory_depth = bottomheight(num_inmemory_nodes, config.fanout);
-			}
-			cout << memory_depth << " depth of nodes will be in memory\n";
-			break;
-	} // Switch
-}
-
-bool tree_t::shouldbe_inmemory(int h, int d) const {
-	switch (config.policy) {
-		case BY_HEIGHT_FROM_BOTTOM:
-			return h > nvm_level;
-		case BY_PERCENTILE:
-			return d <= memory_depth; 
-		default:
-			return false;
-	}
-}
-
 void tree_t::buildfrom(vector<tuple_t>& points) {
 	check_config(points.size());
 	root = buildfrom_helper(points, 0, points.size()-1, 0, NULL);
 }
-
-// Base on pesudo-code on wikipedia
-node_t* tree_t::buildfrom_helper(
-		vector<tuple_t>& points,
-		int lbd, int rbd, int depth, node_t* parent) const {
-	if (lbd > rbd) return NULL;
-//	int axis = depth % config.dimension;
-	int right_median = (rbd - lbd + 1) / 2;
-	if ((rbd - lbd + 1) % 2 == 0) right_median--;
-//	int median_idx = quickfind_tuples_by_axis(
-//			points, lbd, rbd, axis, right_median);
-
-	int median_idx = (rbd + lbd) / 2;
-
-	// Determine where node resides base on node height from leaves
-	node_t* newnode = NULL;
-	int height = bottomheight(rbd - lbd + 1, config.fanout);
-	if (shouldbe_inmemory(height, depth)) {
-		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(node_t), HybridMemory::DRAM);
-	} else {
-		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(node_t), HybridMemory::NVM);
-	}
-	newnode->parent = parent;
-	newnode->depth = depth;
-	newnode->value = points[median_idx];
-
-	newnode->left = buildfrom_helper(
-			points, lbd, median_idx-1, depth+1, newnode);
-	newnode->right = buildfrom_helper(
-			points, median_idx+1, rbd, depth+1, newnode);
-	return newnode;
-}
-
 
 void tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), type);
@@ -143,6 +63,97 @@ void tree_t::remove(node_t* node) {
 void tree_t::display() const {
 	cout << "kd-tree: \n";
 	display_helper(root, "");
+}
+
+node_t* tree_t::search_nearest(tuple_t& target) const {
+	return search_nearest_helper(root, target);
+}
+
+//===========================================================
+//      KDTREE PRIVATE FUNCTIONS
+//===========================================================
+
+void tree_t::free_node(node_t* node) {
+	try{ 
+		HybridMemory::assertAddress(node, HybridMemory::DRAM);
+		HybridMemory::free(node, sizeof(node_t), HybridMemory::DRAM);
+	} catch (FatalError& err) {
+		try {
+			HybridMemory::assertAddress(node, HybridMemory::NVM);
+			HybridMemory::free(node, sizeof(node_t), HybridMemory::NVM);
+		} catch (FatalError& err) {
+			cout << "Encounter invalid memory type " << node << "\n";
+		}
+	} 
+}
+
+void tree_t::free_tree_helper(node_t* start) {
+	if (start->left != NULL) free_tree_helper(start->left);
+	if (start->right != NULL) free_tree_helper(start->right);
+	free_node(start);
+}
+
+void tree_t::check_config(int num_points) {
+	switch (config.policy) {
+		case BY_HEIGHT_FROM_BOTTOM:
+			nvm_level = config.value;
+			break;
+		case BY_PERCENTILE:
+			cout << num_points << " points in total\n";
+			int num_inmemory_nodes = int(num_points * (1.0 - config.value));
+			int memory_depth = 0;
+			if (num_inmemory_nodes != 0) {
+				memory_depth = bottomheight(num_inmemory_nodes, config.fanout);
+			}
+			cout << memory_depth << " depth of nodes will be in memory\n";
+			break;
+	} // Switch
+}
+
+bool tree_t::shouldbe_inmemory(int h, int d) const {
+	switch (config.policy) {
+		case BY_HEIGHT_FROM_BOTTOM:
+			return h > nvm_level;
+		case BY_PERCENTILE:
+			return d <= memory_depth; 
+		default:
+			return false;
+	}
+}
+
+// Base on pesudo-code on wikipedia
+node_t* tree_t::buildfrom_helper(
+		vector<tuple_t>& points,
+		int lbd, int rbd, int depth, node_t* parent) const {
+	if (lbd > rbd) return NULL;
+	int median_idx = (rbd + lbd) / 2;
+	if (!KD_KEY_SORTED) {
+		int axis = depth % config.dimension;
+		int right_median = (rbd - lbd + 1) / 2;
+		if ((rbd - lbd + 1) % 2 == 0) right_median--;
+		median_idx = quickfind_tuples_by_axis(
+				points, lbd, rbd, axis, right_median);
+	}
+
+	// Determine where node resides base on node height from leaves
+	node_t* newnode = NULL;
+	int height = bottomheight(rbd - lbd + 1, config.fanout);
+	if (shouldbe_inmemory(height, depth)) {
+		newnode = (node_t*)HybridMemory::alloc(
+				sizeof(node_t), HybridMemory::DRAM);
+	} else {
+		newnode = (node_t*)HybridMemory::alloc(
+				sizeof(node_t), HybridMemory::NVM);
+	}
+	newnode->parent = parent;
+	newnode->depth = depth;
+	newnode->value = points[median_idx];
+
+	newnode->left = buildfrom_helper(
+			points, lbd, median_idx-1, depth+1, newnode);
+	newnode->right = buildfrom_helper(
+			points, median_idx+1, rbd, depth+1, newnode);
+	return newnode;
 }
 
 void tree_t::display_helper(node_t* node, string label) const {
@@ -234,10 +245,6 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 	}
 }
 
-node_t* tree_t::search_nearest(tuple_t& target) const {
-	return search_nearest_helper(root, target);
-}
-
 node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	if (starter == NULL) return NULL;
@@ -283,3 +290,4 @@ node_t* tree_t::search_nearest_helper(
 	}
 	return cur_best;
 }
+

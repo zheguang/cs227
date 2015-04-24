@@ -11,6 +11,7 @@ using std::cout;
 using namespace hmindex;
 
 const int KD_DEBUG = false;
+const bool KD_KEY_SORTED = true;
 
 // Node of kd-tree
 struct node_t {
@@ -36,10 +37,8 @@ public:
 	// Build a tree from a list of points, 
 	void buildfrom(vector<tuple_t>& points);
 
-	// Insert new node into tree
 	void insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
 
-	// Remove an existing node
 	void remove(node_t* node);
 
   // Search nearest neighbor
@@ -67,7 +66,6 @@ private:
 	// Check whether a node should be allocated in memory
 	bool shouldbe_inmemory(int h, int d) const;
 
-	// Helper function for buildfrom
 	node_t* buildfrom_helper(
 			vector<tuple_t>& points,
 			int lbd, int rbd, int depth, node_t* parent) const;
@@ -77,10 +75,8 @@ private:
 	node_t* find_parent(
 			node_t* starter, tuple_t& tuple, bool& is_left_child) const;
 	
-	// Helper function for display
 	void display_helper(node_t* node, string label) const;
  	
-	// Helper function for search_nearest
 	node_t* search_nearest_helper(node_t* starter, tuple_t& target) const;
 
 	// Helper function for destructor
