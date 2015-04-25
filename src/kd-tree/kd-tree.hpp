@@ -37,7 +37,7 @@ public:
 	// Build a tree from a list of points, 
 	void buildfrom(vector<tuple_t>& points);
 
-	void insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
+	node_t* insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
 
 	void remove(node_t* node);
 
@@ -49,6 +49,10 @@ public:
 
 	int get_dimension() const {
 		return config.dimension;
+	}
+
+	bool isleaf(node_t* node) const {
+		return node->left == NULL && node->right == NULL;
 	}
 private:
 	// Configuration of the hybrid memory allocation

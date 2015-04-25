@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <stack>
+#include <unordered_map>
 #include "kd-tree.hpp"
 
 /* A helper function for testing */
@@ -22,6 +23,15 @@ vector<tuple_t> generate_tuples(int dimension, int size) {
 		ret.push_back(generate_tuple(dimension, 200));
 	}
 	return ret;
+}
+
+void remove_point_fr_pool(vector<tuple_t>& points, tuple_t& target) {
+	for (unsigned int i = 0; i < points.size(); i++) {
+		if (points[i] == target) {
+			points.erase(points.begin() + i);
+			return;
+		}
+	}
 }
 
 bool is_nearest(vector<tuple_t>& points, tuple_t& target, tuple_t& nearest) {
@@ -57,9 +67,8 @@ void experiment_randomnns(
 
 
 void testInsertRemove() {
-	int num_points = 50;
-	int num_trials = 100;
-	int dimension = 10;
+	int num_points = 20;
+	int dimension = 1;
 	int base = 1000;
 	int fanout = 2;
 	config_t config(
@@ -69,12 +78,23 @@ void testInsertRemove() {
 			fanout);
 	tree_t kdtree(config);
 	vector<tuple_t> points;
+	vector<node_t*> nodes;
 	for (int i = 0; i < num_points; i++) {
 		tuple_t tuple = generate_tuple(dimension, base);
 		points.push_back(tuple);
-		kdtree.insert(tuple, hmindex::HybridMemory::DRAM);
+		nodes.push_back(kdtree.insert(tuple, hmindex::HybridMemory::DRAM));
 	}
+	int num_trials = 100;
 	experiment_randomnns(&kdtree, points, num_trials, base); 
+
+	for (int i = 0; i < num_points; i++) {
+		remove_point_fr_pool(points, kdtree.root->value);
+		kdtree.remove(kdtree.root);
+		if (kdtree.root != NULL) {
+			experiment_randomnns(&kdtree, points, num_trials, 2*base); 
+		}
+	}
+	assert(kdtree.root == NULL);
 }
 
 
@@ -148,7 +168,7 @@ int main(int argc, char** argv) {
 	string filename(argv[1]);
 	cout << "build tree from " << filename << "\n";
 	testInsertRemove();
-	testSingleDimension(filename);
-	testMultipleDimension(filename);
+//	testSingleDimension(filename);
+//	testMultipleDimension(filename);
 	return 0;
 }

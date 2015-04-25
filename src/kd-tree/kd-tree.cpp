@@ -20,7 +20,7 @@ void tree_t::buildfrom(vector<tuple_t>& points) {
 	root = buildfrom_helper(points, 0, points.size()-1, 0, NULL);
 }
 
-void tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
+node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), type);
 	newnode->value = tuple;
 	newnode->left = NULL;
@@ -28,7 +28,7 @@ void tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	newnode->parent = NULL;
 	if (root == NULL) {
 		root = newnode;
-		return;
+		return newnode;
 	}
 	bool is_left_child = false;
 	node_t* parent = find_parent(root, tuple, is_left_child);
@@ -36,16 +36,23 @@ void tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 		cout << "bad\n";
 	}
 	newnode->parent = parent;
+	newnode->depth = parent->depth + 1;
 	if (is_left_child) {
 		parent->left = newnode;
 	} else {
 		parent->right = newnode;
 	}
+	return newnode;
 }
 
 void tree_t::remove(node_t* node) {
 	if (node == NULL) return;
 	if (node->left == NULL && node->right == NULL) {
+		if (node == root) {
+			root = NULL;
+			free_node(node);
+			return;
+		}
 		if (node == node->parent->left) {
 			node->parent->left = NULL;
 		} else {
@@ -231,7 +238,7 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 	int axis = start->depth % config.dimension;
 	if (axis == comp_axis) {
 		if (start->left == NULL) return start;
-		return find_smallest(start->right, comp_axis);
+		return find_smallest(start->left, comp_axis);
 	}
 	node_t* lc = find_smallest(start->left, comp_axis);
 	node_t* rc = find_smallest(start->right, comp_axis);
