@@ -32,6 +32,10 @@ int quickfind_tuples_by_axis(
 		vector<tuple_t>& points,
 	  int lbd, int& rbd, unsigned int axis, int right_median);
 
+tuple_t generate_tuple(int dimension, int base);
+vector<tuple_t> generate_tuples(int dimension, int size);
+void remove_point_fr_pool(vector<tuple_t>& points, tuple_t& target);
+
 // Create a list of tuple from .dat file created by dataGen
 vector<tuple_t> createTuplesFromFile(
 	const string& dataFilePath, int dimension);

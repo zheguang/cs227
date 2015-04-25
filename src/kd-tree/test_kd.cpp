@@ -7,33 +7,6 @@
 #include <unordered_map>
 #include "kd-tree.hpp"
 
-/* A helper function for testing */
-tuple_t generate_tuple(int dimension, int base) {
-	tuple_t t(dimension);
-	for (int i = 0; i < dimension; i++) {
-		int b = rand() % base + 10;
-		t[i] = double(rand() % b);
-	}
-	return t;
-}
-
-vector<tuple_t> generate_tuples(int dimension, int size) {
-	vector<tuple_t> ret;
-	for (int i = 0; i < size; i++) {
-		ret.push_back(generate_tuple(dimension, 200));
-	}
-	return ret;
-}
-
-void remove_point_fr_pool(vector<tuple_t>& points, tuple_t& target) {
-	for (unsigned int i = 0; i < points.size(); i++) {
-		if (points[i] == target) {
-			points.erase(points.begin() + i);
-			return;
-		}
-	}
-}
-
 bool is_nearest(vector<tuple_t>& points, tuple_t& target, tuple_t& nearest) {
 	double shortest_d = distance(target, nearest);
 	for (unsigned int i = 0; i < points.size(); i++) {
@@ -67,8 +40,9 @@ void experiment_randomnns(
 
 
 void testInsertRemove() {
-	int num_points = 20;
-	int dimension = 1;
+	cout << "Lets test kd's insert and remove\n";
+	int num_points = 200;
+	int dimension = 5;
 	int base = 1000;
 	int fanout = 2;
 	config_t config(

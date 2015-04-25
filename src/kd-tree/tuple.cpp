@@ -60,6 +60,33 @@ int quickfind_tuples_by_axis(
  	return quickfind_tuples_by_axis(points, i+1, rbd, axis, right_median-(i-lbd+1));	
 }
 
+tuple_t generate_tuple(int dimension, int base) {
+	tuple_t t(dimension);
+	for (int i = 0; i < dimension; i++) {
+		int b = rand() % base + 10;
+		t[i] = double(rand() % b);
+	}
+	return t;
+}
+
+vector<tuple_t> generate_tuples(int dimension, int size) {
+	vector<tuple_t> ret;
+	for (int i = 0; i < size; i++) {
+		ret.push_back(generate_tuple(dimension, 200));
+	}
+	return ret;
+}
+
+void remove_point_fr_pool(vector<tuple_t>& points, tuple_t& target) {
+	for (unsigned int i = 0; i < points.size(); i++) {
+		if (points[i] == target) {
+			points.erase(points.begin() + i);
+			return;
+		}
+	}
+}
+
+
 vector<tuple_t> createTuplesFromFile(
 	const string& dataFilePath, int dimension) {
 	ifstream dataFile(dataFilePath);

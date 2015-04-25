@@ -223,14 +223,14 @@ node_t* tree_t::find_largest(node_t* start, int comp_axis) const {
 	}
 	node_t* lc = find_largest(start->left, comp_axis);
 	node_t* rc = find_largest(start->right, comp_axis);
-	if (lc == NULL && rc == NULL) return start;
-	if (lc == NULL) return rc;
-	if (rc == NULL) return lc;
-	if (lc->value[comp_axis] >= rc->value[comp_axis]) {
-		return lc;
-	} else {
-		return rc;
+	node_t* replacement = start;
+	if (lc != NULL && replacement->value[comp_axis] < lc->value[comp_axis]) {
+		replacement = lc;
 	}
+	if (rc != NULL && replacement->value[comp_axis] < rc->value[comp_axis]) {
+		replacement = rc;
+	}
+	return replacement;
 }
 
 node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
@@ -242,14 +242,14 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 	}
 	node_t* lc = find_smallest(start->left, comp_axis);
 	node_t* rc = find_smallest(start->right, comp_axis);
-	if (lc == NULL && rc == NULL) return start;
-	if (lc == NULL) return rc;
-	if (rc == NULL) return lc;
-	if (lc->value[comp_axis] <= rc->value[comp_axis]) {
-		return lc;
-	} else {
-		return rc;
+	node_t* replacement = start;
+	if (lc != NULL && replacement->value[comp_axis] > lc->value[comp_axis]) {
+		replacement = lc;
 	}
+	if (rc != NULL && replacement->value[comp_axis] > rc->value[comp_axis]) {
+		replacement = rc;
+	}
+	return replacement;
 }
 
 node_t* tree_t::search_nearest_helper(
