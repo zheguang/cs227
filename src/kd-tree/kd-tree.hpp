@@ -48,8 +48,10 @@ public:
 	void buildfrom(vector<tuple_t>& points);
 
 	node_t* insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
+	node_t* mf_insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
 
 	void remove(node_t* node);
+	void mf_remove(node_t* node);
 
   // Search nearest neighbor
 	node_t* search_nearest(tuple_t& target) const;
@@ -83,15 +85,22 @@ private:
 	node_t* buildfrom_helper(
 			vector<tuple_t>& points,
 			int lbd, int rbd, int depth, node_t* parent) const;
+	node_t* mf_buildfrom_helper(
+			vector<tuple_t>& points,
+			int lbd, int rbd, int depth, node_t* parent) const;
 	
 	// Find parent of tuple if it to be inserted into tree rooted at starter
 	// is_left_child is true if tuple if inserted will be parent's left child
 	node_t* find_parent(
 			node_t* starter, tuple_t& tuple, int& willbe_child) const;
+	node_t* mf_find_parent(
+			node_t* starter, tuple_t& tuple, int& willbe_child) const;
 	
 	void display_helper(node_t* node, string label) const;
+	void mf_display_helper(node_t* node, string label) const;
  	
 	node_t* search_nearest_helper(node_t* starter, tuple_t& target) const;
+	node_t* mf_search_nearest_helper(node_t* starter, tuple_t& target) const;
 
 	// Helper function for destructor
 	void free_tree_helper(node_t* start);
@@ -100,5 +109,9 @@ private:
 	node_t* find_replacement(node_t* replaced) const;
 	node_t* find_largest(node_t* start, int comp_axis) const;
 	node_t* find_smallest(node_t* start, int comp_axis) const;
+
+	node_t* mf_find_replacement(node_t* replaced) const;
+	node_t* mf_find_largest(node_t* start, int comp_axis) const;
+	node_t* mf_find_smallest(node_t* start, int comp_axis) const;
 };
 #endif

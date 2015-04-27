@@ -22,25 +22,23 @@ void tree_t::buildfrom(vector<tuple_t>& points) {
 
 node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), type);
+	assert(config.fanout == 2);
 	newnode->value = tuple;
-	for (int i = 0; i < config.fanout; i++) {
-		newnode->children[i] = NULL;
-	}
-//	newnode->left = NULL;
-//	newnode->right = NULL;
+	newnode->left = NULL;
+	newnode->right = NULL;
 	newnode->parent = NULL;
 	if (root == NULL) {
 		root = newnode;
 		return newnode;
 	}
-	bool is_left_child = false;
-	node_t* parent = find_parent(root, tuple, is_left_child);
+	int willbe_child = -1;
+	node_t* parent = find_parent(root, tuple, willbe_child);
 	if (parent == NULL) {
 		cout << "bad\n";
 	}
 	newnode->parent = parent;
 	newnode->depth = parent->depth + 1;
-	if (is_left_child) {
+	if (willbe_child == 0) {
 		parent->left = newnode;
 	} else {
 		parent->right = newnode;
@@ -49,6 +47,7 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 }
 
 void tree_t::remove(node_t* node) {
+	assert(config.fanout == 2);
 	if (node == NULL) return;
 	if (node->left == NULL && node->right == NULL) {
 		if (node == root) {
@@ -135,6 +134,7 @@ bool tree_t::shouldbe_inmemory(int h, int d) const {
 node_t* tree_t::buildfrom_helper(
 		vector<tuple_t>& points,
 		int lbd, int rbd, int depth, node_t* parent) const {
+	assert(config.fanout == 2);
 	if (lbd > rbd) return NULL;
 	int median_idx = (rbd + lbd) / 2;
 	if (!KD_KEY_SORTED) {
@@ -167,6 +167,7 @@ node_t* tree_t::buildfrom_helper(
 }
 
 void tree_t::display_helper(node_t* node, string label) const {
+	assert(config.fanout == 2);
 	if (node == NULL) return;
 	cout << string(2*node->depth, ' ') << label;
 	cout << tuple_string(node->value);
@@ -176,15 +177,13 @@ void tree_t::display_helper(node_t* node, string label) const {
 		cout << " -> " << node->parent;
 	}
 	cout << "\n";
-	for (int i = 0; i < config.fanout; i++) {
-		display_helper(node->children[i], std::to_string(i)+": ");
-	}
-//	display_helper(node->left, "L: ");
-//	display_helper(node->right, "R: ");
+	display_helper(node->left, "L: ");
+	display_helper(node->right, "R: ");
 }
 
 node_t* tree_t::find_parent(
 		node_t* starter, tuple_t& target, int& willbe_child) const {
+	assert(config.fanout == 2);
 	if (starter == NULL) return NULL;
 	node_t* key = starter;
 	while (true) {
@@ -193,15 +192,16 @@ node_t* tree_t::find_parent(
 			return key;
 		}
 		int axis = key->depth % config.dimension;
+		// Canonical
 		if (target[axis] < key->value[axis]) {
 			if (key->left == NULL) {
-				is_left_child = true;
+				willbe_child = 0;
 				return key;
 			}
 			key = key->left;
 		} else {
 			if (key->right == NULL) {
-				is_left_child = false;
+				willbe_child = 1;
 				return key;
 			}
 			key = key->right;
@@ -211,6 +211,7 @@ node_t* tree_t::find_parent(
 }
 
 node_t* tree_t::find_replacement(node_t* replaced) const {
+	assert(config.fanout == 2);
 	if (replaced == NULL) return NULL;
 	int axis = replaced->depth % config.dimension;
 	if (replaced->right != NULL) {
@@ -224,6 +225,7 @@ node_t* tree_t::find_replacement(node_t* replaced) const {
 }
 
 node_t* tree_t::find_largest(node_t* start, int comp_axis) const {
+	assert(config.fanout == 2);
 	if (start == NULL) return start;
 	int axis = start->depth % config.dimension;
 	if (axis == comp_axis) {
@@ -243,6 +245,7 @@ node_t* tree_t::find_largest(node_t* start, int comp_axis) const {
 }
 
 node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
+	assert(config.fanout == 2);
 	if (start == NULL) return start;
 	int axis = start->depth % config.dimension;
 	if (axis == comp_axis) {
@@ -263,9 +266,11 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 
 node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
+	assert(config.fanout == 2);
 	if (starter == NULL) return NULL;
-	bool is_left_child = true;
-	node_t* cur_best = find_parent(starter, target, is_left_child);
+	int willbe_child = -1;
+	node_t* cur_best = find_parent(starter, target, willbe_child);
+	assert(willbe_child == -1);
 	double cur_dist = distance(cur_best->value, target);
 	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
 																								 cur_best->right;
