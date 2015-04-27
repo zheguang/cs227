@@ -23,8 +23,11 @@ void tree_t::buildfrom(vector<tuple_t>& points) {
 node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), type);
 	newnode->value = tuple;
-	newnode->left = NULL;
-	newnode->right = NULL;
+	for (int i = 0; i < config.fanout; i++) {
+		newnode->children[i] = NULL;
+	}
+//	newnode->left = NULL;
+//	newnode->right = NULL;
 	newnode->parent = NULL;
 	if (root == NULL) {
 		root = newnode;
@@ -173,16 +176,22 @@ void tree_t::display_helper(node_t* node, string label) const {
 		cout << " -> " << node->parent;
 	}
 	cout << "\n";
-	display_helper(node->left, "L: ");
-	display_helper(node->right, "R: ");
+	for (int i = 0; i < config.fanout; i++) {
+		display_helper(node->children[i], std::to_string(i)+": ");
+	}
+//	display_helper(node->left, "L: ");
+//	display_helper(node->right, "R: ");
 }
 
 node_t* tree_t::find_parent(
-		node_t* starter, tuple_t& target, bool& is_left_child) const {
+		node_t* starter, tuple_t& target, int& willbe_child) const {
 	if (starter == NULL) return NULL;
 	node_t* key = starter;
 	while (true) {
-		if (key->value == target) return key;
+		if (key->value == target) {
+			willbe_child = -1;
+			return key;
+		}
 		int axis = key->depth % config.dimension;
 		if (target[axis] < key->value[axis]) {
 			if (key->left == NULL) {

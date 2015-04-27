@@ -16,11 +16,21 @@ const bool KD_KEY_SORTED = true;
 // Node of kd-tree
 struct node_t {
 	tuple_t value;
+	vector<node_t*> children;
 	node_t* left;
 	node_t* right;
 	node_t* parent;
 	int depth; // Depth of node in the tree
-	node_t():left(NULL), right(NULL), parent(NULL), depth(0) {}	
+	node_t(int fanout=2) : 
+			left(NULL),
+			right(NULL),
+			parent(NULL),
+			depth(0) {
+		children.resize(fanout);
+		for (int i = 0; i < fanout; i++) {
+			children[i] = NULL;
+		}
+	}	
 };
 
 // Class for kd-tree
@@ -77,7 +87,7 @@ private:
 	// Find parent of tuple if it to be inserted into tree rooted at starter
 	// is_left_child is true if tuple if inserted will be parent's left child
 	node_t* find_parent(
-			node_t* starter, tuple_t& tuple, bool& is_left_child) const;
+			node_t* starter, tuple_t& tuple, int& willbe_child) const;
 	
 	void display_helper(node_t* node, string label) const;
  	
