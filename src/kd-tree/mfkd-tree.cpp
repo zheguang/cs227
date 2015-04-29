@@ -1,11 +1,13 @@
 // @xl242
+#include <assert.h>
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
-#include "kd-tree.hpp"
+#include "mfkd-tree.hpp"
 #include "../FatalError.hpp"
 
 //===========================================================
-//    KDTREE PUBLIC FUNCTIONS
+//    MFKDTREE PUBLIC FUNCTIONS
 //===========================================================
 
 /* A deconstructor to free all memory allocated */
@@ -16,15 +18,17 @@ tree_t::~tree_t() {
 
 void tree_t::buildfrom(vector<tuple_t>& points) {
 	check_config(points.size());
-	root = buildfrom_helper(points, 0, points.size()-1, 0, NULL);
+	root = buildfrom_helper(points, 0, points.size()-1, 0, NULL, 0);
 }
 
-node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
-	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), type);
+/*node_t* tree_t::mf_insert(
+		tuple_t& tuple,
+		HybridMemory::MEMORY_NODE_TYPE stype
+		HybridMemory::MEMORY_NODE_TYPE ctype) {
+	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), stype);
 	newnode->value = tuple;
-	newnode->left = NULL;
-	newnode->right = NULL;
 	newnode->parent = NULL;
+	newnode->children = HybridMemory::alloc(config.fanout * sizeof(node_t), ctype);
 	if (root == NULL) {
 		root = newnode;
 		return newnode;
@@ -36,15 +40,11 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	}
 	newnode->parent = parent;
 	newnode->depth = parent->depth + 1;
-	if (willbe_child == 0) {
-		parent->left = newnode;
-	} else {
-		parent->right = newnode;
-	}
+	insert_childnode(parent, childindex, newnode);
 	return newnode;
-}
+}*/
 	
-void tree_t::remove(node_t* node) {
+/*void tree_t::remove(node_t* node) {
 	if (node == NULL) return;
 	if (node->left == NULL && node->right == NULL) {
 		if (node == root) {
@@ -63,7 +63,7 @@ void tree_t::remove(node_t* node) {
 	node_t* replacement = find_replacement(node);
 	node->value = replacement->value;
 	remove(replacement);
-}
+}*/
 
 
 void tree_t::display() const {
@@ -71,15 +71,17 @@ void tree_t::display() const {
 	display_helper(root, "");
 }
 
-node_t* tree_t::search_nearest(tuple_t& target) const {
+/*node_t* tree_t::search_nearest(tuple_t& target) const {
 	return search_nearest_helper(root, target);
-}
+}*/
 
 //===========================================================
 //      KDTREE PRIVATE FUNCTIONS
 //===========================================================
 
-void tree_t::free_node(node_t* node) {
+/*void tree_t::free_node(node_t* node) {
+	void* children = node->children;
+	// Free node itself
 	try{ 
 		HybridMemory::assertAddress(node, HybridMemory::DRAM);
 		HybridMemory::free(node, sizeof(node_t), HybridMemory::DRAM);
@@ -90,13 +92,16 @@ void tree_t::free_node(node_t* node) {
 		} catch (FatalError& err) {
 			cout << "Encounter invalid memory type " << node << "\n";
 		}
-	} 
-}
+	}
+
+	// Free children
+	// TODO
+}*/
 
 void tree_t::free_tree_helper(node_t* start) {
-	if (start->left != NULL) free_tree_helper(start->left);
-	if (start->right != NULL) free_tree_helper(start->right);
-	free_node(start);
+//	if (start->left != NULL) free_tree_helper(start->left);
+//	if (start->right != NULL) free_tree_helper(start->right);
+//	free_node(start);
 }
 
 void tree_t::check_config(int num_points) {
@@ -127,38 +132,76 @@ bool tree_t::shouldbe_inmemory(int h, int d) const {
 	}
 }
 
+node_t* tree_t::get_child(node_t* parent, int index) const {
+	if (index >= config.fanout) {
+		throw "bad";
+	}
+	node_t* ptr = (node_t*)parent->children;
+	for (int i = 0; i < index; i++) ptr++;
+	return ptr;
+}
+
 // Base on pesudo-code on wikipedia
 node_t* tree_t::buildfrom_helper(
 		vector<tuple_t>& points,
-		int lbd, int rbd, int depth, node_t* parent) const {
+		int lbd, int rbd, int depth, node_t* parent, int childindex) const {
 	if (lbd > rbd) return NULL;
-	int median_idx = (rbd + lbd) / 2;
-	if (!KD_KEY_SORTED) {
-		int axis = depth % config.dimension;
-		int right_median = (rbd - lbd + 1) / 2;
-		if ((rbd - lbd + 1) % 2 == 0) right_median--;
-		median_idx = quickfind_tuples_by_axis(
-				points, lbd, rbd, axis, right_median);
-	}
+	
+	// Assume key all sorted at this point
+	assert(MFKD_KEY_SORTED);
+	int median_index = (rbd + lbd) / 2;
+	vector<int> lbds;
+	if (lbd != rbd) {
+		int unitsize = (rbd - lbd + 1) / config.fanout;
+		int index = 0;
+		for (int i = 0; i < config.fanout; i++) {
+			lbds.push_back(lbd + index);
+			index += std::max(1, unitsize);
+			if (index > rbd) break;
+		}
 
-	// Determine where node resides base on node height from leaves
+		if (MFKD_DEBUG) {
+			cout << "lbds: \n";
+			for (unsigned int i = 0; i < lbds.size(); i++) {
+				cout << lbds[i] << " ";
+			} cout << "\n";
+		}
+	}
 	node_t* newnode = NULL;
 	int height = bottomheight(rbd - lbd + 1, config.fanout);
-	if (shouldbe_inmemory(height, depth)) {
-		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(node_t), HybridMemory::DRAM);
+	if (parent != NULL) {
+		if (parent->num_children == 0) {
+			if (shouldbe_inmemory(depth, height)) {
+				parent->children = HybridMemory::alloc(
+						sizeof(node_t) * config.fanout, HybridMemory::DRAM);
+			} else {
+				parent->children = HybridMemory::alloc(
+						sizeof(node_t) * config.fanout, HybridMemory::NVM);
+			}
+		}
+		newnode = get_child(parent, childindex);
+		parent->num_children++;
 	} else {
-		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(node_t), HybridMemory::NVM);
+		if (shouldbe_inmemory(depth, height)) {
+			newnode = (node_t*)HybridMemory::alloc(
+					sizeof(node_t), HybridMemory::DRAM);
+		} else {
+			newnode = (node_t*)HybridMemory::alloc(
+					sizeof(node_t), HybridMemory::NVM);
+		}
 	}
-	newnode->parent = parent;
+	newnode->value = points[median_index];
 	newnode->depth = depth;
-	newnode->value = points[median_idx];
+	newnode->parent = parent;
+	newnode->num_children = 0;
 
-	newnode->left = buildfrom_helper(
-			points, lbd, median_idx-1, depth+1, newnode);
-	newnode->right = buildfrom_helper(
-			points, median_idx+1, rbd, depth+1, newnode);
+	for (unsigned int i = 0; i < lbds.size(); i++) {
+		if (i < lbds.size() - 1) {
+			buildfrom_helper(points, lbds[i], lbds[i+1]-1, depth+1, newnode, i);
+		} else {
+			buildfrom_helper(points, lbds[i], rbd, depth+1, newnode, i);
+		}
+	}
 	return newnode;
 }
 
@@ -167,16 +210,18 @@ void tree_t::display_helper(node_t* node, string label) const {
 	cout << string(2*node->depth, ' ') << label;
 	cout << tuple_string(node->value);
 	// Debug statement
-	if (KD_DEBUG) {
+	if (MFKD_DEBUG) {
 		cout <<" :" << node;
 		cout << " -> " << node->parent;
 	}
 	cout << "\n";
-	display_helper(node->left, "L: ");
-	display_helper(node->right, "R: ");
+	for (int i = 0; i < node->num_children; i++) {
+		node_t* child = get_child(node, i);
+		display_helper(child, std::to_string(i)+" :");
+	}
 }
 
-node_t* tree_t::find_parent(
+/*node_t* tree_t::find_parent(
 		node_t* starter, tuple_t& target, int& willbe_child) const {
 	if (starter == NULL) return NULL;
 	node_t* key = starter;
@@ -202,9 +247,9 @@ node_t* tree_t::find_parent(
 		}
 	}
 	return NULL;
-}
+}*/
 
-node_t* tree_t::find_replacement(node_t* replaced) const {
+/*node_t* tree_t::find_replacement(node_t* replaced) const {
 	if (replaced == NULL) return NULL;
 	int axis = replaced->depth % config.dimension;
 	if (replaced->right != NULL) {
@@ -253,9 +298,9 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 		replacement = rc;
 	}
 	return replacement;
-}
+}*/
 
-node_t* tree_t::search_nearest_helper(
+/*node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	if (starter == NULL) return NULL;
 	int willbe_child = -1;
@@ -300,5 +345,5 @@ node_t* tree_t::search_nearest_helper(
 		key = key->parent;
 	}
 	return cur_best;
-}
+}*/
 

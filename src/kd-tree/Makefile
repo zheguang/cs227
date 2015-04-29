@@ -17,10 +17,12 @@ kd-tree.o: kd-tree.cpp
 kd: kd-tree.o HybridMemory.o tuple.o
 	$(CC) $(CFLAGS) -o test_kd tuple.o kd-tree.o HybridMemory.o test_kd.cpp $(LDLIBS)
 
+# For mult-fanout kd-tree
+mfkd-tree.o: mfkd-tree.cpp
+	$(CC) $(CFLAGS) -c mfkd-tree.cpp
 
-# For Cache sensitive kd-tree
-#kd: cs-kd-tree.o HybridMemory.o tuple.o
-#	$(CC) $(CFLAGS) -o test_cskd tuple.o cs-kd-tree.o HybridMemory.o test_cskd.cpp $(LDLIBS)
+mfkd: mfkd-tree.o HybridMemory.o tuple.o
+	$(CC) $(CFLAGS) -o test_mfkd tuple.o mfkd-tree.o HybridMemory.o test_mfkd.cpp $(LDLIBS)
 
 clean: 
-	rm *.o test_kd 
+	rm *.o test_kd test_mfkd

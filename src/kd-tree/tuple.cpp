@@ -77,6 +77,20 @@ vector<tuple_t> generate_tuples(int dimension, int size) {
 	return ret;
 }
 
+vector<tuple_t> generate_sortedtuples(int dimension, int size) {
+	vector<tuple_t> ret;
+	int counter = 0;
+	for (int i = 0; i < size; i++) {
+		tuple_t t(dimension);
+		for (int i = 0; i < dimension; i++) {
+			t[i] = counter;
+			counter++;
+		}
+		ret.push_back(t);
+	}
+	return ret;
+}
+
 void remove_point_fr_pool(vector<tuple_t>& points, tuple_t& target) {
 	for (unsigned int i = 0; i < points.size(); i++) {
 		if (points[i] == target) {
