@@ -143,16 +143,19 @@ node_t* tree_t::buildfrom_helper(
 
 	// Determine where node resides base on node height from leaves
 	node_t* newnode = NULL;
+	// Reminder, size of node depends on dimension as well
+	int nodesize = sizeof(node_t) + sizeof(datatype_t) * config.dimension;
 	int height = bottomheight(rbd - lbd + 1, config.fanout);
 	if (shouldbe_inmemory(height, depth)) {
 		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(node_t), HybridMemory::DRAM);
+				sizeof(*newnode), HybridMemory::DRAM);
 	} else {
 		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(node_t), HybridMemory::NVM);
+				sizeof(*newnode), HybridMemory::NVM);
 	}
 	newnode->parent = parent;
 	newnode->depth = depth;
+	// XXX Is thi copy memory data to NVM ??
 	newnode->value = points[median_idx];
 
 	newnode->left = buildfrom_helper(

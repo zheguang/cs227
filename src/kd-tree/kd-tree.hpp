@@ -17,7 +17,6 @@ const bool KD_KEY_SORTED = true;
 // Node of kd-tree
 struct node_t {
 	tuple_t value;
-	vector<node_t*> children;
 	node_t* left;
 	node_t* right;
 	node_t* parent;
