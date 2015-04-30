@@ -148,10 +148,10 @@ node_t* tree_t::buildfrom_helper(
 	int height = bottomheight(rbd - lbd + 1, config.fanout);
 	if (shouldbe_inmemory(height, depth)) {
 		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(*newnode), HybridMemory::DRAM);
+				nodesize, HybridMemory::DRAM);
 	} else {
 		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(*newnode), HybridMemory::NVM);
+				nodesize, HybridMemory::NVM);
 	}
 	newnode->parent = parent;
 	newnode->depth = depth;
@@ -261,9 +261,12 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	if (starter == NULL) return NULL;
-	int willbe_child = -1;
+	int willbe_child = 0;
 	node_t* cur_best = find_parent(starter, target, willbe_child);
-	assert(willbe_child == -1);
+	if (willbe_child == -1) {
+		return cur_best;
+	}
+	
 	double cur_dist = distance(cur_best->value, target);
 	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
 																								 cur_best->right;
