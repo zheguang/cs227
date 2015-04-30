@@ -72,7 +72,7 @@ void tree_t::buildfrom(vector<tuple_t>& points) {
 
 void tree_t::display() const {
 	cout << "kd-tree: \n";
-	display_helper(root, "");
+	display_helper(root, "root<0>: ");
 }
 
 node_t* tree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
@@ -252,7 +252,10 @@ void tree_t::display_helper(node_t* node, string label) const {
 		node_t* child = get_child(node, i);
 		bool isnull = is_null(child);
 		if (!isnull) {
-			display_helper(child, std::to_string(i) + ": ");
+			int axis = child->depth % config.dimension;
+			display_helper(
+					child, std::to_string(i) +
+					"<" + std::to_string(axis) + ">: ");
 		}
 	}
 }
@@ -351,13 +354,10 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 }*/
 
 datatype_t smallest_distdiff_innode(
-		node_t* node, int selectindex, tuple_t& target) {
+		node_t* node, tuple_t& target) {
 	datatype_t cur_dist = (datatype_t)LLONG_MAX;
-	if (selectindex < (int)node->values.size()) {
-		cur_dist = std::min(cur_dist, distance(node->values[selectindex], target));
-	}
-	if (selectindex > 0) {
-		cur_dist = std::min(cur_dist, distance(node->values[selectindex-1], target));
+	for (unsigned int i = 0; i < node->values.size(); i++) {
+		cur_dist = std::min(cur_dist, distance(node->values[i], target));
 	}
 	return cur_dist;
 }
@@ -372,10 +372,11 @@ node_t* tree_t::search_nearest_helper(
 		return cur_best;
 	}
 
-	datatype_t cur_dist = smallest_distdiff_innode(cur_best, willbe_child, target);
+	datatype_t cur_dist = smallest_distdiff_innode(cur_best, target);
+	node_t* p = cur_best;
 	if (cur_best->num_children != 0 ) {
 		for (int i = 0; i < config.fanout; i++) {
-			node_t* child = get_child(cur_best, i);
+			node_t* child = get_child(p, i);
 			bool isnull = is_null(child);
 			if (isnull) continue;
 			datatype_t canddist;
@@ -388,21 +389,22 @@ node_t* tree_t::search_nearest_helper(
 	}
 
 	node_t* key = cur_best->parent;
-	node_t* prev = NULL;
+	node_t* prev = cur_best;
 	int childindex = cur_best->childindex;
 	while (key != NULL && prev != starter) {
-		datatype_t d = smallest_distdiff_innode(key, cur_best->childindex, target);
+		datatype_t d = smallest_distdiff_innode(key, target);
 		if (d < cur_dist) {
 			cur_best = key;
 			cur_dist = d;
 		}
 		int axis = key->depth % config.dimension;
-		if (childindex < (int)key->values.size() &&
-				abs(target[axis] - key->values[childindex][axis]) < cur_dist) {
-			// Probe to childindex + 1
-			node_t* probe = get_child(key, childindex + 1);
+		// Probe left if there is any
+		for (int c = 0; c < childindex; c++) {
+			node_t* probe = get_child(key, c);
 			bool isnull = is_null(probe);
-			if (!isnull) {
+			if (isnull) continue;
+			datatype_t distbd = abs(target[axis] - key->values[childindex-1][axis]);
+			if (cur_dist > distbd) {
 				datatype_t canddist;
 				node_t* candidate = search_nearest_helper(probe, target, canddist);
 				if (canddist < cur_dist) {
@@ -410,13 +412,14 @@ node_t* tree_t::search_nearest_helper(
 					cur_dist = canddist;
 				}
 			}
-		} // If
-		if (childindex > 0 &&
-				abs(target[axis] - key->values[childindex - 1][axis]) < cur_dist) {
-			// Probe to childindex - 1
-			node_t* probe = get_child(key, childindex - 1);
+		}
+		// Probe right if there is any
+		for (int c = childindex+1; c <= (int)key->values.size(); c++) {
+			node_t* probe = get_child(key, c);
 			bool isnull = is_null(probe);
-			if (!isnull) {
+			if (isnull) continue;
+			datatype_t distbd = abs(target[axis] - key->values[childindex][axis]);
+			if (cur_dist > distbd) {
 				datatype_t canddist;
 				node_t* candidate = search_nearest_helper(probe, target, canddist);
 				if (canddist < cur_dist) {
@@ -424,7 +427,7 @@ node_t* tree_t::search_nearest_helper(
 					cur_dist = canddist;
 				}
 			}
-		} // If
+		}
 		childindex = key->childindex;
 		prev = key;
 		key = key->parent;

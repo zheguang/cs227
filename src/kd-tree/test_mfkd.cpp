@@ -12,7 +12,7 @@ bool is_nearest(vector<tuple_t>& points, tuple_t& target, datatype_t actual_sdis
 		double d = distance(points[i], target);
 		if (d < actual_sdist) {
 			if (MFKD_DEBUG) {
-				cout << "err nns for " << tuple_string(target);
+				cout << "Err! nns for " << tuple_string(target);
 				cout << "Found nearer: " << tuple_string(points[i]) << " (" << d << ").\n";
 			}
 			return false;
@@ -27,6 +27,7 @@ void experiment_randomnns(
 	node_t* nearest = NULL;
 	for (int i = 0; i < num_trials; i++) {
 		tuple_t target = generate_tuple(kdtree->get_dimension(), randbase);		
+		cout << "wt find nearest for " << tuple_string(target) << "\n";
 		datatype_t sdist;
 		nearest = kdtree->search_nearest(target, sdist);
 		if (MFKD_DEBUG) {
@@ -72,14 +73,14 @@ void testInsertRemove() {
 }*/
 
 
-void testSingleDimension(string pathname) {
+void testSingleAndMultDimension(string pathname) {
 	cout << "Test for single dimension\n";
-	int dimension = 1;
-	int fanout = 3;
-	int num_trials = 1;
+	int dimension = 4;
+	int fanout = 5;
+	int num_trials = 20;
 	int base = 200;
 //	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
-	vector<tuple_t> points = generate_sortedtuples(dimension, 20);
+	vector<tuple_t> points = generate_sortedtuples(dimension, 200);
 	config_t config(
 			dimension, 
 			BY_PERCENTILE,
@@ -106,30 +107,6 @@ void testSingleDimension(string pathname) {
 }
 
 
-/*void testMultipleDimension(string pathname) {
-	cout << "Lets test multiple dimension kd\n";
-	int dimension = 3;
-	int fanout = 2; // XXX fanout must be 2 at this point!!!
-	int num_trials = 20;
-	int base = 200;
-	config_t config(
-			dimension, 
-			BY_PERCENTILE,
-			0.5, // Let half of the tree in memory
-			fanout);
-	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
-	tuple_t target;
-	target.resize(dimension);
-
-	tree_t kdtree(config);
-	kdtree.buildfrom(points);
-	if (KD_DEBUG) {
-		kdtree.display();
-	}
-	experiment_randomnns(&kdtree, points, num_trials, base);
-}*/
-
-
 int main(int argc, char** argv) {
 	if (argc != 2) {
 		cout << "Please define a data source\n";
@@ -138,7 +115,6 @@ int main(int argc, char** argv) {
 	string filename(argv[1]);
 	cout << "build tree from " << filename << "\n";
 //	testInsertRemove();
-	testSingleDimension(filename);
-//	testMultipleDimension(filename);
+	testSingleAndMultDimension(filename);
 	return 0;
 }
