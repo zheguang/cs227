@@ -30,7 +30,10 @@ public:
 	node_t* root;
 	tree_t(config_t& config) : 
 			root(NULL), 
-			config(config) {}
+			config(config) {
+		nodesize = sizeof(node_t) +
+				sizeof(datatype_t) * config.dimension * (config.fanout - 1);
+	}
 
 	~tree_t();
 

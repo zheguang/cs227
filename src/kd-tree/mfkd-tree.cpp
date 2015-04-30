@@ -28,7 +28,7 @@ void tree_t::buildfrom(vector<tuple_t>& points) {
 node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	if (root == NULL) {
 		node_t* newnode = (node_t*)HybridMemory::alloc(nodesize, type);
-		memset(newnode, 0, nodesize);
+		memset(newnode, 0, nodesize); 
 		newnode->values.push_back(tuple);
 		newnode->parent = NULL;
 		return newnode;
@@ -38,6 +38,17 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	if (parent == NULL) {
 		cout << "bad\n";
 	}
+	if ((int)parent->values.size() < config.fanout - 1) {
+		int i = 0;
+		int axis = parent->depth % config.dimension;
+		while (i < (int)parent->values.size() &&
+				tuple[axis] >= parent->values[i][axis]) {
+			i++;
+		}
+		parent->values.insert(parent->values.begin()+i, tuple);
+		return parent;
+	}
+
 	if (willbe_child == -1) return parent;
 	if (parent->num_children == 0) {
 		parent->children = HybridMemory::alloc(nodesize * config.fanout, type);
@@ -125,8 +136,6 @@ void tree_t::check_config(int num_points) {
 			cout << memory_depth << " depth of nodes will be in memory\n";
 			break;
 	} // Switch
-	nodesize = sizeof(node_t) +
-			sizeof(datatype_t) * config.dimension * (config.fanout - 1);
 }
 
 bool tree_t::shouldbe_inmemory(int h, int d) const {

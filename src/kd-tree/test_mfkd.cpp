@@ -39,7 +39,7 @@ void experiment_randomnns(
 	}
 }
 
-/*
+
 void testInsertRemove() {
 	cout << "Lets test kd's insert and remove\n";
 	int num_points = 200;
@@ -49,28 +49,30 @@ void testInsertRemove() {
 	config_t config(
 			dimension, 
 			BY_PERCENTILE,
-			1.0,
+			1.0, // Useless here
 			fanout);
 	tree_t kdtree(config);
 	vector<tuple_t> points;
 	vector<node_t*> nodes;
 	for (int i = 0; i < num_points; i++) {
 		tuple_t tuple = generate_tuple(dimension, base);
+		cout << "wt insert " << tuple_string(tuple) << "\n";
 		points.push_back(tuple);
 		nodes.push_back(kdtree.insert(tuple, hmindex::HybridMemory::DRAM));
 	}
 	int num_trials = 100;
+	kdtree.display();
 	experiment_randomnns(&kdtree, points, num_trials, base); 
 
-	for (int i = 0; i < num_points; i++) {
+/*	for (int i = 0; i < num_points; i++) {
 		remove_point_fr_pool(points, kdtree.root->value);
 		kdtree.remove(kdtree.root);
 		if (kdtree.root != NULL) {
 			experiment_randomnns(&kdtree, points, num_trials, 2*base); 
 		}
 	}
-	assert(kdtree.root == NULL);
-}*/
+	assert(kdtree.root == NULL);*/
+}
 
 
 void testSingleAndMultDimension(string pathname) {
@@ -84,7 +86,7 @@ void testSingleAndMultDimension(string pathname) {
 	config_t config(
 			dimension, 
 			BY_PERCENTILE,
-			0.0,
+			0.99,
 			fanout);
 	tuple_t target(dimension);
 	
@@ -114,7 +116,7 @@ int main(int argc, char** argv) {
 	}
 	string filename(argv[1]);
 	cout << "build tree from " << filename << "\n";
-//	testInsertRemove();
-	testSingleAndMultDimension(filename);
+	testInsertRemove();
+//	testSingleAndMultDimension(filename);
 	return 0;
 }
