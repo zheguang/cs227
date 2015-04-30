@@ -25,16 +25,12 @@ void tree_t::buildfrom(vector<tuple_t>& points) {
 	root = buildfrom_helper(points, 0, points.size()-1, 0, NULL, 0);
 }
 
-/*node_t* tree_t::insert(
-		tuple_t& tuple,
-		HybridMemory::MEMORY_NODE_TYPE stype
-		HybridMemory::MEMORY_NODE_TYPE ctype) {
-	node_t* newnode = (node_t*)HybridMemory::alloc(sizeof(node_t), stype);
-	newnode->value = tuple;
-	newnode->parent = NULL;
-	newnode->children = HybridMemory::alloc(config.fanout * sizeof(node_t), ctype);
+node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	if (root == NULL) {
-		root = newnode;
+		node_t* newnode = (node_t*)HybridMemory::alloc(nodesize, type);
+		memset(newnode, 0, nodesize);
+		newnode->values.push_back(tuple);
+		newnode->parent = NULL;
 		return newnode;
 	}
 	int willbe_child = -1;
@@ -42,11 +38,17 @@ void tree_t::buildfrom(vector<tuple_t>& points) {
 	if (parent == NULL) {
 		cout << "bad\n";
 	}
+	if (willbe_child == -1) return parent;
+	if (parent->num_children == 0) {
+		parent->children = HybridMemory::alloc(nodesize * config.fanout, type);
+		memset(parent->children, 0, nodesize * config.fanout);
+	}
+	node_t* newnode = get_child(parent, willbe_child);
 	newnode->parent = parent;
 	newnode->depth = parent->depth + 1;
-	insert_childnode(parent, childindex, newnode);
+	newnode->childindex = willbe_child;
 	return newnode;
-}*/
+}
 	
 /*void tree_t::remove(node_t* node) {
 	if (node == NULL) return;
@@ -190,6 +192,7 @@ node_t* tree_t::buildfrom_helper(
 			newnode = (node_t*)HybridMemory::alloc(
 					sizeof(node_t), HybridMemory::NVM);
 		}
+		memset(newnode, 0, nodesize);
 	}
 	newnode->depth = depth;
 	newnode->parent = parent;
