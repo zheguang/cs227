@@ -17,6 +17,7 @@ const bool MFKD_KEY_SORTED = true;
 struct node_t {
 	int depth; // Depth of node in the tree
 	int num_children;
+	int childindex; // Number-th of child of its parent
 	void* children;
 	node_t* parent;
 	vector<tuple_t> values;

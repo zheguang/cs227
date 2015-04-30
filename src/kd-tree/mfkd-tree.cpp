@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <cstdlib>
+#include <limits.h>
 #include <iostream>
 #include <string.h>
 #include <string>
@@ -202,6 +203,7 @@ node_t* tree_t::buildfrom_helper(
 	newnode->depth = depth;
 	newnode->parent = parent;
 	newnode->num_children = 0;
+	newnode->childindex = childindex;
 	if (rbd - lbd + 1 <= config.fanout - 1) {
 		for (int i = lbd; i <= rbd; i++) {
 			newnode->values.push_back(points[i]);
@@ -346,6 +348,18 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 	return replacement;
 }*/
 
+datatype_t smallest_distdiff_innode(
+		node_t* node, int selectindex, tuple_t* target) {
+	datatype_t cur_dist = (datatype_t)LLONG_MAX;
+	if (selectindex < node->values.size()) {
+		cur_dist = min(cur_dist, distance(node->values[selectindex], target));
+	}
+	if (selectindex > 0) {
+		cur_dist = min(cur_dist, distance(node->values[selectindex-1], target));
+	}
+	return cur_dist;
+}
+
 node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	if (starter == NULL) return NULL;
@@ -355,21 +369,40 @@ node_t* tree_t::search_nearest_helper(
 		return cur_best;
 	}
 
-	datatype_t cur_dist = (datatype_t)
-	
-	distance(cur_best->value, target);
-	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
-																								 cur_best->right;
-	if (left_branch != NULL) {
-		// Make sure we start query from a leaf node
-		node_t* candidate = search_nearest_helper(left_branch, target);
-		if (distance(candidate->value, target) < cur_dist) {
-			cur_best = candidate;
-			cur_dist = distance(candidate->value, target);
+	datatype_t cur_dist = smallest_distdiff_inode(cur_best, willbe_child, target);
+	if (cur_best->num_children != 0 ) {
+		for (int i = 0; i < config.fanout; i++) {
+			node_t* child = get_child(cur_best, i);
+			bool isnull = is_null(child);
+			if (isnull) continue;
+			node_t* candidate = search_nearest_helper(child, target);
+				datatype_t canddist = (datatype_t)LLONG_MAX;
+				for (unsigned int i = 0; i < candidate->values.size(); i++) {
+					canddist = min(canddist, distance(candidate->values[i], target);
+				}
+				if (canddist < cur_dist) {
+					cur_best = candidate;
+					cur_dist = canddist;
+				}
+			}
 		}
 	}
 
 	node_t* key = cur_best->parent;
+	int childindex = cur_best->childindex;
+	while (key != NULL && prev != starter) {
+		datatype_t d = smallest_distdiff_innode(key, curbest->childindex, target);
+		if (d < cur_dist) {
+			cur_best = key;
+			cur_dist = d;
+		}
+		int axis = key->depth % config.dimension;
+		if (abs(target[axis] - key->values[childindex][axis]) < cur_dist) {
+
+
+	}
+
+
 	node_t* prev = cur_best;
 	while (key != NULL && prev != starter) {
 		// Check value on node
