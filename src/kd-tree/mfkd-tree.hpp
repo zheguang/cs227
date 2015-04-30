@@ -10,7 +10,7 @@
 using std::cout;
 using namespace hmindex;
 
-const int MFKD_DEBUG = true;
+const int MFKD_DEBUG = false;
 const bool MFKD_KEY_SORTED = true;
 
 // Node of kd-tree
@@ -56,6 +56,8 @@ private:
 	// Configuration of the hybrid memory allocation
 	config_t config;
 	
+	int nodesize;
+
 	// Level of tree nodes from leaves should be resides in NVM
 	int nvm_level = -1;
 	

@@ -25,7 +25,7 @@ void tree_t::buildfrom(vector<tuple_t>& points) {
 	root = buildfrom_helper(points, 0, points.size()-1, 0, NULL, 0);
 }
 
-/*node_t* tree_t::mf_insert(
+/*node_t* tree_t::insert(
 		tuple_t& tuple,
 		HybridMemory::MEMORY_NODE_TYPE stype
 		HybridMemory::MEMORY_NODE_TYPE ctype) {
@@ -123,6 +123,8 @@ void tree_t::check_config(int num_points) {
 			cout << memory_depth << " depth of nodes will be in memory\n";
 			break;
 	} // Switch
+	nodesize = sizeof(node_t) +
+			sizeof(datatype_t) * config.dimension * (config.fanout - 1);
 }
 
 bool tree_t::shouldbe_inmemory(int h, int d) const {
@@ -140,8 +142,6 @@ node_t* tree_t::get_child(node_t* parent, int index) const {
 	if (index >= config.fanout) {
 		throw "bad";
 	}
-	int nodesize = sizeof(node_t) +
-			sizeof(datatype_t) * config.dimension * (config.fanout - 1);
 	char* ptr = (char*)parent->children;
 	for (int i = 0; i < index; i++) {
 		for (int k = 0; k < nodesize; k++) ptr++;
@@ -166,17 +166,8 @@ node_t* tree_t::buildfrom_helper(
 			index += std::max(1, unitsize);
 			if (lbd + index > rbd) break;
 		}
-
-		/*if (MFKD_DEBUG) {
-			cout << "lbds: \n";
-			for (unsigned int i = 0; i < lbds.size(); i++) {
-				cout << lbds[i] << " ";
-			} cout << "\n";
-		}*/
 	}
 	node_t* newnode = NULL;
-	int nodesize = sizeof(node_t) +
-			sizeof(datatype_t) * config.dimension * (config.fanout - 1);
 	int height = bottomheight(rbd - lbd + 1, config.fanout);
 	if (parent != NULL) {
 		if (parent->num_children == 0) {
@@ -223,8 +214,6 @@ node_t* tree_t::buildfrom_helper(
 }
 
 bool tree_t::is_null(node_t* node) const {
-	int nodesize = sizeof(node_t) +
-			sizeof(datatype_t) * config.dimension * (config.fanout - 1);
 	char* nullchild = (char*)malloc(nodesize);
 	memset(nullchild, 0, nodesize);
 	int ret = strncmp((char*)node, nullchild, nodesize);

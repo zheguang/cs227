@@ -79,8 +79,8 @@ void testSingleAndMultDimension(string pathname) {
 	int fanout = 5;
 	int num_trials = 20;
 	int base = 200;
-//	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
-	vector<tuple_t> points = generate_sortedtuples(dimension, 200);
+	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
+//	vector<tuple_t> points = generate_sortedtuples(dimension, 200);
 	config_t config(
 			dimension, 
 			BY_PERCENTILE,
