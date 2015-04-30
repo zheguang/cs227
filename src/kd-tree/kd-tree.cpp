@@ -267,7 +267,7 @@ node_t* tree_t::search_nearest_helper(
 		return cur_best;
 	}
 	
-	double cur_dist = distance(cur_best->value, target);
+	datatype_t cur_dist = distance(cur_best->value, target);
 	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
 																								 cur_best->right;
 	if (left_branch != NULL) {

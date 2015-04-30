@@ -17,7 +17,7 @@ typedef vector<datatype_t> tuple_t;
 string tuple_string(tuple_t t);
 
 // calculate norm2 distance between two points
-double distance(tuple_t& t1, tuple_t& t2);
+datatype_t distance(tuple_t& t1, tuple_t& t2);
 
 // Swap position of two tuples in the list
 inline void swap_tuples_in_points(vector<tuple_t>& points, int i1, int i2) {
