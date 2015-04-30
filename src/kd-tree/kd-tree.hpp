@@ -2,6 +2,7 @@
 #ifndef KD_TREE_H_
 #define KD_TREE_H_
 
+#include <assert.h>
 #include <iostream>
 #include <string>
 #include "config.hpp"
@@ -16,12 +17,11 @@ const bool KD_KEY_SORTED = true;
 // Node of kd-tree
 struct node_t {
 	tuple_t value;
-	vector<node_t*> children;
 	node_t* left;
 	node_t* right;
 	node_t* parent;
 	int depth; // Depth of node in the tree
-	node_t(int fanout=2) : 
+	node_t() : 
 			left(NULL),
 			right(NULL),
 			parent(NULL),
@@ -35,7 +35,9 @@ public:
 	node_t* root;
 	tree_t(config_t& config) : 
 			root(NULL), 
-			config(config) {}
+			config(config) {
+		assert(config.fanout == 2);
+	}
 
 	~tree_t();
 
@@ -87,8 +89,6 @@ private:
 	// Find parent of tuple if it to be inserted into tree rooted at starter
 	// is_left_child is true if tuple if inserted will be parent's left child
 	node_t* find_parent(
-			node_t* starter, tuple_t& tuple, int& willbe_child) const;
-	node_t* mf_find_parent(
 			node_t* starter, tuple_t& tuple, int& willbe_child) const;
 	
 	void display_helper(node_t* node, string label) const;

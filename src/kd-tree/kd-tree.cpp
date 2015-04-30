@@ -1,5 +1,4 @@
 // @xl242
-#include <assert.h>
 #include <cstdlib>
 #include <iostream>
 #include "kd-tree.hpp"
@@ -45,7 +44,7 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	}
 	return newnode;
 }
-
+	
 void tree_t::remove(node_t* node) {
 	assert(config.fanout == 2);
 	if (node == NULL) return;
@@ -147,16 +146,19 @@ node_t* tree_t::buildfrom_helper(
 
 	// Determine where node resides base on node height from leaves
 	node_t* newnode = NULL;
+	// Reminder, size of node depends on dimension as well
+	int nodesize = sizeof(node_t) + sizeof(datatype_t) * config.dimension;
 	int height = bottomheight(rbd - lbd + 1, config.fanout);
 	if (shouldbe_inmemory(height, depth)) {
 		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(node_t), HybridMemory::DRAM);
+				nodesize, HybridMemory::DRAM);
 	} else {
 		newnode = (node_t*)HybridMemory::alloc(
-				sizeof(node_t), HybridMemory::NVM);
+				nodesize, HybridMemory::NVM);
 	}
 	newnode->parent = parent;
 	newnode->depth = depth;
+	// XXX Is thi copy memory data to NVM ??
 	newnode->value = points[median_idx];
 
 	newnode->left = buildfrom_helper(
@@ -183,7 +185,6 @@ void tree_t::display_helper(node_t* node, string label) const {
 
 node_t* tree_t::find_parent(
 		node_t* starter, tuple_t& target, int& willbe_child) const {
-	assert(config.fanout == 2);
 	if (starter == NULL) return NULL;
 	node_t* key = starter;
 	while (true) {
@@ -268,10 +269,13 @@ node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	assert(config.fanout == 2);
 	if (starter == NULL) return NULL;
-	int willbe_child = -1;
+	int willbe_child = 0;
 	node_t* cur_best = find_parent(starter, target, willbe_child);
-	assert(willbe_child == -1);
-	double cur_dist = distance(cur_best->value, target);
+	if (willbe_child == -1) {
+		return cur_best;
+	}
+	
+	datatype_t cur_dist = distance(cur_best->value, target);
 	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
 																								 cur_best->right;
 	if (left_branch != NULL) {

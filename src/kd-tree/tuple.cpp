@@ -20,9 +20,9 @@ string tuple_string(tuple_t t) {
 	return buf.str();
 }
 
-double distance(tuple_t& t1, tuple_t& t2) {
-	if (t1.size() != t2.size()) return -double(1);
-	double ret = 0.0;
+datatype_t distance(tuple_t& t1, tuple_t& t2) {
+	if (t1.size() != t2.size()) return -datatype_t(1);
+	datatype_t ret = 0.0;
 	for (unsigned int i = 0; i < t1.size(); i++) {
 		ret += (t1[i] - t2[i]) * (t1[i] - t2[i]);
 	}

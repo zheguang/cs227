@@ -346,13 +346,18 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 	return replacement;
 }*/
 
-/*node_t* tree_t::search_nearest_helper(
+node_t* tree_t::search_nearest_helper(
 		node_t* starter, tuple_t& target) const {
 	if (starter == NULL) return NULL;
-	int willbe_child = -1;
+	int willbe_child = 0;
 	node_t* cur_best = find_parent(starter, target, willbe_child);
-	assert(willbe_child == -1);
-	double cur_dist = distance(cur_best->value, target);
+	if (willbe_child == -1) {
+		return cur_best;
+	}
+
+	datatype_t cur_dist = (datatype_t)
+	
+	distance(cur_best->value, target);
 	node_t* left_branch = cur_best->left != NULL ? cur_best->left:
 																								 cur_best->right;
 	if (left_branch != NULL) {
@@ -391,5 +396,5 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 		key = key->parent;
 	}
 	return cur_best;
-}*/
+}
 
