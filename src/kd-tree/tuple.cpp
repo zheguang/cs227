@@ -14,9 +14,9 @@ using namespace hmindex;
 string tuple_string(tuple_t t) {
 	ostringstream buf;
 	buf << "(";
-	for (unsigned int i = 0; i < t.size(); i++) {
+	for (unsigned int i = 0; i < t.size() - 1; i++) {
 		buf << t[i] << " ";
-	} buf << ")";
+	} buf << t.back() << ")";
 	return buf.str();
 }
 

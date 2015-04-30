@@ -15,7 +15,7 @@ const bool MFKD_KEY_SORTED = true;
 
 // Node of kd-tree
 struct node_t {
-	tuple_t value;
+	vector<tuple_t> values;
 	void* children;
 	node_t* parent;
 	int depth; // Depth of node in the tree
@@ -66,8 +66,10 @@ private:
 	// Check whether a node should be allocated in memory
 	bool shouldbe_inmemory(int h, int d) const;
 	
-	// TODO Insert newnode into children nodes of parent at childindex
+	// Insert newnode into children nodes of parent at childindex
 	node_t* get_child(node_t* parent, int index) const;
+	
+	bool is_null(node_t* node) const;
 
 	node_t* buildfrom_helper(
 			vector<tuple_t>& points,

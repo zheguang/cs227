@@ -1,8 +1,11 @@
 // @xl242
 #include <assert.h>
 #include <algorithm>
+#include <stdlib.h>
 #include <cstdlib>
 #include <iostream>
+#include <string.h>
+#include <string>
 #include "mfkd-tree.hpp"
 #include "../FatalError.hpp"
 
@@ -136,9 +139,13 @@ node_t* tree_t::get_child(node_t* parent, int index) const {
 	if (index >= config.fanout) {
 		throw "bad";
 	}
-	node_t* ptr = (node_t*)parent->children;
-	for (int i = 0; i < index; i++) ptr++;
-	return ptr;
+	int nodesize = sizeof(node_t) +
+			sizeof(datatype_t) * config.dimension * (config.fanout - 1);
+	char* ptr = (char*)parent->children;
+	for (int i = 0; i < index; i++) {
+		for (int k = 0; k < nodesize; k++) ptr++;
+	}
+	return (node_t*)ptr;
 }
 
 // Base on pesudo-code on wikipedia
@@ -149,7 +156,6 @@ node_t* tree_t::buildfrom_helper(
 	
 	// Assume key all sorted at this point
 	assert(MFKD_KEY_SORTED);
-	int median_index = (rbd + lbd) / 2;
 	vector<int> lbds;
 	if (lbd != rbd) {
 		int unitsize = (rbd - lbd + 1) / config.fanout;
@@ -157,7 +163,7 @@ node_t* tree_t::buildfrom_helper(
 		for (int i = 0; i < config.fanout; i++) {
 			lbds.push_back(lbd + index);
 			index += std::max(1, unitsize);
-			if (index > rbd) break;
+			if (lbd + index > rbd) break;
 		}
 
 		if (MFKD_DEBUG) {
@@ -168,16 +174,19 @@ node_t* tree_t::buildfrom_helper(
 		}
 	}
 	node_t* newnode = NULL;
+	int nodesize = sizeof(node_t) +
+			sizeof(datatype_t) * config.dimension * (config.fanout - 1);
 	int height = bottomheight(rbd - lbd + 1, config.fanout);
 	if (parent != NULL) {
 		if (parent->num_children == 0) {
 			if (shouldbe_inmemory(depth, height)) {
 				parent->children = HybridMemory::alloc(
-						sizeof(node_t) * config.fanout, HybridMemory::DRAM);
+						nodesize * config.fanout, HybridMemory::DRAM);
 			} else {
 				parent->children = HybridMemory::alloc(
-						sizeof(node_t) * config.fanout, HybridMemory::NVM);
+						nodesize * config.fanout, HybridMemory::NVM);
 			}
+			memset(parent->children, 0, nodesize * config.fanout);
 		}
 		newnode = get_child(parent, childindex);
 		parent->num_children++;
@@ -190,34 +199,57 @@ node_t* tree_t::buildfrom_helper(
 					sizeof(node_t), HybridMemory::NVM);
 		}
 	}
-	newnode->value = points[median_index];
 	newnode->depth = depth;
 	newnode->parent = parent;
 	newnode->num_children = 0;
-
-	for (unsigned int i = 0; i < lbds.size(); i++) {
-		if (i < lbds.size() - 1) {
-			buildfrom_helper(points, lbds[i], lbds[i+1]-1, depth+1, newnode, i);
-		} else {
-			buildfrom_helper(points, lbds[i], rbd, depth+1, newnode, i);
+	if (rbd - lbd + 1 <= config.fanout - 1) {
+		for (int i = lbd; i <= rbd; i++) {
+			newnode->values.push_back(points[i]);
 		}
+		return newnode;
 	}
+
+	for (unsigned int i = 1; i < lbds.size(); i++) {
+		newnode->values.push_back(points[lbds[i]]);
+	}
+	buildfrom_helper(points, lbds[0], lbds[1]-1, depth+1, newnode, 0);
+	for (unsigned int i = 1; i < lbds.size() - 1; i++) {
+		buildfrom_helper(points, lbds[i]+1, lbds[i+1]-1, depth+1, newnode, i);
+	}
+	buildfrom_helper(points, lbds.back()+1, rbd, depth+1, newnode, lbds.size()-1);
 	return newnode;
+}
+
+bool tree_t::is_null(node_t* node) const {
+	int nodesize = sizeof(node_t) +
+			sizeof(datatype_t) * config.dimension * (config.fanout - 1);
+	char* nullchild = (char*)malloc(nodesize);
+	memset(nullchild, 0, nodesize);
+	int ret = strncmp((char*)node, nullchild, nodesize);
+	free(nullchild);
+	return ret == 0;
 }
 
 void tree_t::display_helper(node_t* node, string label) const {
 	if (node == NULL) return;
 	cout << string(2*node->depth, ' ') << label;
-	cout << tuple_string(node->value);
+	for (unsigned int i = 0; i < node->values.size() - 1; i++) {
+		cout << tuple_string(node->values[i]) << "|";
+	} cout << tuple_string(node->values.back());
+
 	// Debug statement
 	if (MFKD_DEBUG) {
 		cout <<" :" << node;
 		cout << " -> " << node->parent;
 	}
 	cout << "\n";
-	for (int i = 0; i < node->num_children; i++) {
+	if (node->num_children == 0) return;
+	for (int i = 0; i < config.fanout; i++) {
 		node_t* child = get_child(node, i);
-		display_helper(child, std::to_string(i)+" :");
+		bool isnull = is_null(child);
+		if (!isnull) {
+			display_helper(child, std::to_string(i) + ": ");
+		}
 	}
 }
 
