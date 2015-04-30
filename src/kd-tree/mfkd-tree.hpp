@@ -46,6 +46,7 @@ public:
 	
 	// Print the kd-tree
 	void display() const; 
+	void print_node(node_t* node) const;
 
 	int get_dimension() const {
 		return config.dimension;

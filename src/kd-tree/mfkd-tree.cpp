@@ -167,12 +167,12 @@ node_t* tree_t::buildfrom_helper(
 			if (lbd + index > rbd) break;
 		}
 
-		if (MFKD_DEBUG) {
+		/*if (MFKD_DEBUG) {
 			cout << "lbds: \n";
 			for (unsigned int i = 0; i < lbds.size(); i++) {
 				cout << lbds[i] << " ";
 			} cout << "\n";
-		}
+		}*/
 	}
 	node_t* newnode = NULL;
 	int nodesize = sizeof(node_t) +
@@ -232,19 +232,21 @@ bool tree_t::is_null(node_t* node) const {
 	return ret == 0;
 }
 
-void tree_t::display_helper(node_t* node, string label) const {
-	if (node == NULL) return;
-	cout << string(2*node->depth, ' ') << label;
+void tree_t::print_node(node_t* node) const {
 	for (unsigned int i = 0; i < node->values.size() - 1; i++) {
 		cout << tuple_string(node->values[i]) << "|";
 	} cout << tuple_string(node->values.back());
-
 	// Debug statement
 	if (MFKD_DEBUG) {
 		cout <<" :" << node;
 		cout << " -> " << node->parent;
-	}
-	cout << "\n";
+	} cout << "\n";
+}
+
+void tree_t::display_helper(node_t* node, string label) const {
+	if (node == NULL) return;
+	cout << string(2*node->depth, ' ') << label;
+	print_node(node);
 	if (node->num_children == 0) return;
 	for (int i = 0; i < config.fanout; i++) {
 		node_t* child = get_child(node, i);
@@ -349,13 +351,13 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
 }*/
 
 datatype_t smallest_distdiff_innode(
-		node_t* node, int selectindex, tuple_t* target) {
+		node_t* node, int selectindex, tuple_t& target) {
 	datatype_t cur_dist = (datatype_t)LLONG_MAX;
-	if (selectindex < node->values.size()) {
-		cur_dist = min(cur_dist, distance(node->values[selectindex], target));
+	if (selectindex < (int)node->values.size()) {
+		cur_dist = std::min(cur_dist, distance(node->values[selectindex], target));
 	}
 	if (selectindex > 0) {
-		cur_dist = min(cur_dist, distance(node->values[selectindex-1], target));
+		cur_dist = std::min(cur_dist, distance(node->values[selectindex-1], target));
 	}
 	return cur_dist;
 }
@@ -370,7 +372,7 @@ node_t* tree_t::search_nearest_helper(
 		return cur_best;
 	}
 
-	datatype_t cur_dist = smallest_distdiff_inode(cur_best, willbe_child, target);
+	datatype_t cur_dist = smallest_distdiff_innode(cur_best, willbe_child, target);
 	if (cur_best->num_children != 0 ) {
 		for (int i = 0; i < config.fanout; i++) {
 			node_t* child = get_child(cur_best, i);
@@ -386,22 +388,23 @@ node_t* tree_t::search_nearest_helper(
 	}
 
 	node_t* key = cur_best->parent;
+	node_t* prev = NULL;
 	int childindex = cur_best->childindex;
 	while (key != NULL && prev != starter) {
-		datatype_t d = smallest_distdiff_innode(key, curbest->childindex, target);
+		datatype_t d = smallest_distdiff_innode(key, cur_best->childindex, target);
 		if (d < cur_dist) {
 			cur_best = key;
 			cur_dist = d;
 		}
 		int axis = key->depth % config.dimension;
-		if (childindex < key->values.size() &&
+		if (childindex < (int)key->values.size() &&
 				abs(target[axis] - key->values[childindex][axis]) < cur_dist) {
 			// Probe to childindex + 1
-			node_t* probe = get_child(childindex + 1);
+			node_t* probe = get_child(key, childindex + 1);
 			bool isnull = is_null(probe);
 			if (!isnull) {
 				datatype_t canddist;
-				node_t* candidate = search_nearest_helper(prob, target, canddist);
+				node_t* candidate = search_nearest_helper(probe, target, canddist);
 				if (canddist < cur_dist) {
 					cur_best = candidate;
 					cur_dist = canddist;
@@ -411,11 +414,11 @@ node_t* tree_t::search_nearest_helper(
 		if (childindex > 0 &&
 				abs(target[axis] - key->values[childindex - 1][axis]) < cur_dist) {
 			// Probe to childindex - 1
-			node_t* probe = get_child(childindex - 1);
+			node_t* probe = get_child(key, childindex - 1);
 			bool isnull = is_null(probe);
 			if (!isnull) {
 				datatype_t canddist;
-				node_t* candidate = search_nearest_helper(prob, target, canddist);
+				node_t* candidate = search_nearest_helper(probe, target, canddist);
 				if (canddist < cur_dist) {
 					cur_best = candidate;
 					cur_dist = canddist;
@@ -423,6 +426,7 @@ node_t* tree_t::search_nearest_helper(
 			}
 		} // If
 		childindex = key->childindex;
+		prev = key;
 		key = key->parent;
 	} // While
 	sdist = cur_dist;
