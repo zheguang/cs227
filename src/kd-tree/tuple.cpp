@@ -84,7 +84,7 @@ vector<tuple_t> generate_sortedtuples(int dimension, int size) {
 		tuple_t t(dimension);
 		for (int i = 0; i < dimension; i++) {
 			t[i] = counter;
-			counter++;
+			counter += 2;
 		}
 		ret.push_back(t);
 	}

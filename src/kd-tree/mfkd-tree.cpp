@@ -253,33 +253,47 @@ void tree_t::display_helper(node_t* node, string label) const {
 	}
 }
 
-/*node_t* tree_t::find_parent(
+node_t* tree_t::find_parent(
 		node_t* starter, tuple_t& target, int& willbe_child) const {
 	if (starter == NULL) return NULL;
 	node_t* key = starter;
 	while (true) {
-		if (key->value == target) {
-			willbe_child = -1;
-			return key;
+	search:
+		for (unsigned int i = 0; i < key->values.size(); i++) {
+			if (key->values[i] == target) {
+				willbe_child = -1;
+				return key;
+			}
 		}
 		int axis = key->depth % config.dimension;
-		// Canonical
-		if (target[axis] < key->value[axis]) {
-			if (key->left == NULL) {
-				willbe_child = 0;
-				return key;
+		if (key->num_children == 0) {
+			willbe_child = 0;
+			while(willbe_child < (int)key->values.size() && 
+					target[axis] >= key->values[willbe_child][axis]) {
+				willbe_child++;
 			}
-			key = key->left;
-		} else {
-			if (key->right == NULL) {
-				willbe_child = 1;
-				return key;
-			}
-			key = key->right;
+			return key;	
 		}
+		for (unsigned int i = 0; i < key->values.size(); i++) {
+			if (target[axis] < key->values[i][axis]) {
+				node_t* child = get_child(key, i);
+				if (is_null(child)) {
+					willbe_child = i;
+					return key;
+				}
+				key = child;
+				goto search;
+			}
+		}
+		node_t* lastchild = get_child(key, key->values.size());
+		if (is_null(lastchild)) {
+			willbe_child = (int)key->values.size();
+			return key;
+		}
+		key = lastchild;
 	}
 	return NULL;
-}*/
+}
 
 /*node_t* tree_t::find_replacement(node_t* replaced) const {
 	if (replaced == NULL) return NULL;

@@ -15,11 +15,11 @@ const bool MFKD_KEY_SORTED = true;
 
 // Node of kd-tree
 struct node_t {
-	vector<tuple_t> values;
-	void* children;
-	node_t* parent;
 	int depth; // Depth of node in the tree
 	int num_children;
+	void* children;
+	node_t* parent;
+	vector<tuple_t> values;
 };
 
 // Class for kd-tree
@@ -49,6 +49,9 @@ public:
 	int get_dimension() const {
 		return config.dimension;
 	}
+	
+	node_t* find_parent(
+			node_t* starter, tuple_t& tuple, int& willbe_child) const;
 
 private:
 	// Configuration of the hybrid memory allocation
@@ -75,10 +78,8 @@ private:
 			vector<tuple_t>& points,
 			int lbd, int rbd, int depth, node_t* parent, int childindex) const;
 	
-	// Find parent of tuple if it to be inserted into tree rooted at starter
+	//XXX Find parent of tuple if it to be inserted into tree rooted at starter
 	// is_left_child is true if tuple if inserted will be parent's left child
-	node_t* find_parent(
-			node_t* starter, tuple_t& tuple, int& willbe_child) const;
 	
 	void display_helper(node_t* node, string label) const;
  	
