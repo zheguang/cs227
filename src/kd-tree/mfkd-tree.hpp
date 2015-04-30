@@ -42,7 +42,7 @@ public:
 	void remove(node_t* node);
 
   // Search nearest neighbor
-	node_t* search_nearest(tuple_t& target) const;
+	node_t* search_nearest(tuple_t& target, datatype_t& sdist) const;
 	
 	// Print the kd-tree
 	void display() const; 
@@ -50,9 +50,6 @@ public:
 	int get_dimension() const {
 		return config.dimension;
 	}
-	
-	node_t* find_parent(
-			node_t* starter, tuple_t& tuple, int& willbe_child) const;
 
 private:
 	// Configuration of the hybrid memory allocation
@@ -81,10 +78,13 @@ private:
 	
 	//XXX Find parent of tuple if it to be inserted into tree rooted at starter
 	// is_left_child is true if tuple if inserted will be parent's left child
+	node_t* find_parent(
+			node_t* starter, tuple_t& tuple, int& willbe_child) const;
 	
 	void display_helper(node_t* node, string label) const;
  	
-	node_t* search_nearest_helper(node_t* starter, tuple_t& target) const;
+	node_t* search_nearest_helper(
+			node_t* starter, tuple_t& target, datatype_t& sdist) const;
 
 	// Helper function for destructor
 	void free_tree_helper(node_t* start);

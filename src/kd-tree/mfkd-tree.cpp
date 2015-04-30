@@ -75,9 +75,9 @@ void tree_t::display() const {
 	display_helper(root, "");
 }
 
-/*node_t* tree_t::search_nearest(tuple_t& target) const {
-	return search_nearest_helper(root, target);
-}*/
+node_t* tree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
+	return search_nearest_helper(root, target, sdist);
+}
 
 //===========================================================
 //      KDTREE PRIVATE FUNCTIONS
@@ -361,11 +361,12 @@ datatype_t smallest_distdiff_innode(
 }
 
 node_t* tree_t::search_nearest_helper(
-		node_t* starter, tuple_t& target) const {
+		node_t* starter, tuple_t& target, datatype_t& sdist) const {
 	if (starter == NULL) return NULL;
 	int willbe_child = 0;
 	node_t* cur_best = find_parent(starter, target, willbe_child);
 	if (willbe_child == -1) {
+		sdist = 0;
 		return cur_best;
 	}
 
@@ -375,15 +376,11 @@ node_t* tree_t::search_nearest_helper(
 			node_t* child = get_child(cur_best, i);
 			bool isnull = is_null(child);
 			if (isnull) continue;
-			node_t* candidate = search_nearest_helper(child, target);
-				datatype_t canddist = (datatype_t)LLONG_MAX;
-				for (unsigned int i = 0; i < candidate->values.size(); i++) {
-					canddist = min(canddist, distance(candidate->values[i], target);
-				}
-				if (canddist < cur_dist) {
-					cur_best = candidate;
-					cur_dist = canddist;
-				}
+			datatype_t canddist;
+			node_t* candidate = search_nearest_helper(child, target, canddist);
+			if (canddist < cur_dist) {
+				cur_best = candidate;
+				cur_dist = canddist;
 			}
 		}
 	}
@@ -397,37 +394,38 @@ node_t* tree_t::search_nearest_helper(
 			cur_dist = d;
 		}
 		int axis = key->depth % config.dimension;
-		if (abs(target[axis] - key->values[childindex][axis]) < cur_dist) {
-
-
-	}
-
-
-	node_t* prev = cur_best;
-	while (key != NULL && prev != starter) {
-		// Check value on node
-		if (distance(key->value, target) < cur_dist) {
-			cur_best = key;
-			cur_dist = distance(key->value, target);
-		}
-		int axis = key->depth % config.dimension;
-		if (abs(target[axis] - key->value[axis]) < cur_dist) {
-			// Need to go to the other branch
-			node_t* candidate = NULL;
-			if (prev == key->left) { // We were previously in left branch
-				candidate = search_nearest_helper(key->right, target);
-			} else if (prev == key->right) { // Previously on right
-				candidate = search_nearest_helper(key->left, target);
+		if (childindex < key->values.size() &&
+				abs(target[axis] - key->values[childindex][axis]) < cur_dist) {
+			// Probe to childindex + 1
+			node_t* probe = get_child(childindex + 1);
+			bool isnull = is_null(probe);
+			if (!isnull) {
+				datatype_t canddist;
+				node_t* candidate = search_nearest_helper(prob, target, canddist);
+				if (canddist < cur_dist) {
+					cur_best = candidate;
+					cur_dist = canddist;
+				}
 			}
-			// Compare with cur_dist
-			if (candidate != NULL && distance(candidate->value, target) < cur_dist) {
-				cur_best = candidate;
-				cur_dist = distance(candidate->value, target);
+		} // If
+		if (childindex > 0 &&
+				abs(target[axis] - key->values[childindex - 1][axis]) < cur_dist) {
+			// Probe to childindex - 1
+			node_t* probe = get_child(childindex - 1);
+			bool isnull = is_null(probe);
+			if (!isnull) {
+				datatype_t canddist;
+				node_t* candidate = search_nearest_helper(prob, target, canddist);
+				if (canddist < cur_dist) {
+					cur_best = candidate;
+					cur_dist = canddist;
+				}
 			}
-		}
-		prev = key;
+		} // If
+		childindex = key->childindex;
 		key = key->parent;
-	}
+	} // While
+	sdist = cur_dist;
 	return cur_best;
 }
 
