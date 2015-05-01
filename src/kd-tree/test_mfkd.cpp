@@ -66,9 +66,9 @@ void testInsertRemove() {
 	int num_trials = 100;
 	experiment_randomnns(&kdtree, points, num_trials, base); 
 
-	int index;
-	node_t* smallest = kdtree.find_smallest(kdtree.root, 4, index);
-	cout << "find smallest " << tuple_string(smallest->values[index]) << "\n";
+//	int index;
+//	node_t* smallest = kdtree.find_smallest(kdtree.root, 4, index);
+//	cout << "find smallest " << tuple_string(smallest->values[index]) << "\n";
 
 /*	for (int i = 0; i < num_points; i++) {
 		remove_point_fr_pool(points, kdtree.root->value);

@@ -327,27 +327,53 @@ node_t* tree_t::find_parent(
 	}
 	// A leaf node
 	return replaced;
-}
-
-node_t* tree_t::find_largest(node_t* start, int comp_axis) const {
-	if (start == NULL) return start;
-	int axis = start->depth % config.dimension;
-	if (axis == comp_axis) {
-		if (start->right == NULL) return start;
-		return find_largest(start->right, comp_axis);
-	}
-	node_t* lc = find_largest(start->left, comp_axis);
-	node_t* rc = find_largest(start->right, comp_axis);
-	node_t* replacement = start;
-	if (lc != NULL && replacement->value[comp_axis] < lc->value[comp_axis]) {
-		replacement = lc;
-	}
-	if (rc != NULL && replacement->value[comp_axis] < rc->value[comp_axis]) {
-		replacement = rc;
-	}
-	return replacement;
 }*/
 
+int tree_t::index_of_largest(node_t* node, int axis) const {
+	if (node->depth % config.dimension == axis) return node->values.size()-1;
+	int ret = 0;
+	for (unsigned int i = 1; i < node->values.size(); i++) {
+		if (node->values[ret][axis] < node->values[i][axis]) ret = i;
+	}
+	return ret;
+}
+
+node_t* tree_t::find_largest(node_t* start, int comp_axis, int& index) const {
+	if (start == NULL) return start;
+	int idx =	index_of_largest(start, comp_axis);
+	if (start->num_children == 0) {
+		index = idx;
+		return start;
+	}
+	int axis = start->depth % config.dimension;
+	if (axis == comp_axis) {
+		node_t* probe = NULL;
+		for (int i = config.fanout - 1; i >= 0; i--) {
+			probe = get_child(start, i);
+			if (!is_null(probe)) break;
+		}
+		if (probe == NULL) {
+			index = idx;
+			return start;
+		}
+		return find_largest(probe, comp_axis, index);
+	}
+	node_t* replacement = start;
+	int idx_largest = idx;
+	for (int i = 0; i < config.fanout; i++) {
+		node_t* probe = get_child(start, i);
+		if (is_null(probe)) continue;
+		int idx;
+		node_t* cnode = find_largest(probe, comp_axis, idx);
+		if (cnode->values[idx][comp_axis] >
+				replacement->values[idx_largest][comp_axis]) {
+			replacement = cnode;
+			idx_largest = idx;
+		}
+	}
+	index = idx_largest;
+	return replacement;
+}
 
 int tree_t::index_of_smallest(node_t* node, int axis) const {
 	if (node->depth % config.dimension == axis) return 0;
