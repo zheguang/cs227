@@ -10,7 +10,7 @@
 using std::cout;
 using namespace hmindex;
 
-const int MFKD_DEBUG = true;
+const int MFKD_DEBUG = false;
 const bool MFKD_KEY_SORTED = true;
 
 // Node of kd-tree

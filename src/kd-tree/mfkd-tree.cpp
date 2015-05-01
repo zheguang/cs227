@@ -47,7 +47,6 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 			i++;
 		}
 		parent->values.insert(parent->values.begin()+i, tuple);
-		//parent->values.push_back(tuple);
 		return parent;
 	}
 
@@ -392,6 +391,7 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis, int& index) const {
 			idx_smallest = idx;
 		}
 	}
+	index = idx_smallest;
 	return replacement;
 }
 

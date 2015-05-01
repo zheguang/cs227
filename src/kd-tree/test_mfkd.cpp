@@ -47,7 +47,7 @@ void testInsertRemove() {
 	int num_points = 20;
 	int dimension = 5;
 	int base = 1000;
-	int fanout = 2;
+	int fanout = 3;
 	config_t config(
 			dimension, 
 			BY_PERCENTILE,
@@ -62,9 +62,13 @@ void testInsertRemove() {
 		points.push_back(tuple);
 		nodes.push_back(kdtree.insert(tuple, hmindex::HybridMemory::DRAM));
 	}
-//	int num_trials = 100;
 	kdtree.display();
-//	experiment_randomnns(&kdtree, points, num_trials, base); 
+	int num_trials = 100;
+	experiment_randomnns(&kdtree, points, num_trials, base); 
+
+	int index;
+	node_t* smallest = kdtree.find_smallest(kdtree.root, 4, index);
+	cout << "find smallest " << tuple_string(smallest->values[index]) << "\n";
 
 /*	for (int i = 0; i < num_points; i++) {
 		remove_point_fr_pool(points, kdtree.root->value);
