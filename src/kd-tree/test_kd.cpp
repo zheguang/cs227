@@ -38,10 +38,9 @@ void experiment_randomnns(
 	}
 }
 
-
 void testInsertRemove() {
 	cout << "Lets test kd's insert and remove\n";
-	int num_points = 200;
+	int num_points = 10;
 	int dimension = 5;
 	int base = 1000;
 	int fanout = 2;
@@ -61,14 +60,18 @@ void testInsertRemove() {
 	int num_trials = 100;
 	experiment_randomnns(&kdtree, points, num_trials, base); 
 
-	for (int i = 0; i < num_points; i++) {
+	int index;
+	node_t* smallest = kdtree.find_smallest(kdtree.root, 0, index);
+	cout << "find smallest " << tuple_string(smallest->values[index]) << "\n";
+
+	/*for (int i = 0; i < num_points; i++) {
 		remove_point_fr_pool(points, kdtree.root->value);
 		kdtree.remove(kdtree.root);
 		if (kdtree.root != NULL) {
 			experiment_randomnns(&kdtree, points, num_trials, 2*base); 
 		}
 	}
-	assert(kdtree.root == NULL);
+	assert(kdtree.root == NULL);*/
 }
 
 

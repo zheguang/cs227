@@ -27,7 +27,9 @@ void experiment_randomnns(
 	node_t* nearest = NULL;
 	for (int i = 0; i < num_trials; i++) {
 		tuple_t target = generate_tuple(kdtree->get_dimension(), randbase);		
-		cout << "wt find nearest for " << tuple_string(target) << "\n";
+		if (MFKD_DEBUG) {
+			cout << "wt find nearest for " << tuple_string(target) << "\n";
+		}
 		datatype_t sdist;
 		nearest = kdtree->search_nearest(target, sdist);
 		if (MFKD_DEBUG) {
@@ -42,7 +44,7 @@ void experiment_randomnns(
 
 void testInsertRemove() {
 	cout << "Lets test kd's insert and remove\n";
-	int num_points = 200;
+	int num_points = 20;
 	int dimension = 5;
 	int base = 1000;
 	int fanout = 2;
@@ -60,9 +62,9 @@ void testInsertRemove() {
 		points.push_back(tuple);
 		nodes.push_back(kdtree.insert(tuple, hmindex::HybridMemory::DRAM));
 	}
-	int num_trials = 100;
+//	int num_trials = 100;
 	kdtree.display();
-	experiment_randomnns(&kdtree, points, num_trials, base); 
+//	experiment_randomnns(&kdtree, points, num_trials, base); 
 
 /*	for (int i = 0; i < num_points; i++) {
 		remove_point_fr_pool(points, kdtree.root->value);

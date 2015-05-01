@@ -10,7 +10,7 @@
 using std::cout;
 using namespace hmindex;
 
-const int MFKD_DEBUG = false;
+const int MFKD_DEBUG = true;
 const bool MFKD_KEY_SORTED = true;
 
 // Node of kd-tree
@@ -54,6 +54,8 @@ public:
 	int get_dimension() const {
 		return config.dimension;
 	}
+	
+	node_t* find_smallest(node_t* start, int comp_axis, int& index_smallest) const;
 
 private:
 	// Configuration of the hybrid memory allocation
@@ -98,6 +100,7 @@ private:
 
 	node_t* find_replacement(node_t* replaced) const;
 	node_t* find_largest(node_t* start, int comp_axis) const;
-	node_t* find_smallest(node_t* start, int comp_axis) const;
+//	node_t* find_smallest(node_t* start, int comp_axis, int& index_smallest) const;
+	int index_of_smallest(node_t* node, int axis) const;
 };
 #endif

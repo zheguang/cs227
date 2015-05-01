@@ -31,6 +31,7 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 		memset(newnode, 0, nodesize); 
 		newnode->values.push_back(tuple);
 		newnode->parent = NULL;
+		root = newnode;
 		return newnode;
 	}
 	int willbe_child = -1;
@@ -46,6 +47,7 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 			i++;
 		}
 		parent->values.insert(parent->values.begin()+i, tuple);
+		//parent->values.push_back(tuple);
 		return parent;
 	}
 
@@ -58,11 +60,26 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	newnode->parent = parent;
 	newnode->depth = parent->depth + 1;
 	newnode->childindex = willbe_child;
+	parent->num_children++;
+	newnode->values.push_back(tuple);
 	return newnode;
 }
 	
 /*void tree_t::remove(node_t* node) {
 	if (node == NULL) return;
+	if (node->num_children == 0) {
+		if (node == root) {
+			root = NULL;
+		} else {
+			memset(node, 0, nodesize);
+			node->parent->num_children--;
+			if (node->parent->num_children == 0) {
+				
+			}
+		}
+		
+	} 
+	
 	if (node->left == NULL && node->right == NULL) {
 		if (node == root) {
 			root = NULL;
@@ -110,9 +127,6 @@ node_t* tree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
 			cout << "Encounter invalid memory type " << node << "\n";
 		}
 	}
-
-	// Free children
-	// TODO
 }*/
 
 void tree_t::free_tree_helper(node_t* start) {
@@ -333,26 +347,53 @@ node_t* tree_t::find_largest(node_t* start, int comp_axis) const {
 		replacement = rc;
 	}
 	return replacement;
+}*/
+
+
+int tree_t::index_of_smallest(node_t* node, int axis) const {
+	if (node->depth % config.dimension == axis) return 0;
+	int ret = 0;
+	for (unsigned int i = 1; i < node->values.size(); i++) {
+		if (node->values[ret][axis] > node->values[i][axis]) ret = i;
+	}
+	return ret;
 }
 
-node_t* tree_t::find_smallest(node_t* start, int comp_axis) const {
+node_t* tree_t::find_smallest(node_t* start, int comp_axis, int& index) const {
 	if (start == NULL) return start;
+	int idx =	index_of_smallest(start, comp_axis);
+	if (start->num_children == 0) {
+		index = idx;
+		return start;
+	}
 	int axis = start->depth % config.dimension;
 	if (axis == comp_axis) {
-		if (start->left == NULL) return start;
-		return find_smallest(start->left, comp_axis);
+		node_t* probe = NULL;
+		for (int i = 0; i < config.fanout; i++) {
+			probe = get_child(start, i);
+			if (!is_null(probe)) break;
+		}
+		if (probe == NULL) {
+			index = idx;
+			return start;
+		}
+		return find_smallest(probe, comp_axis, index);
 	}
-	node_t* lc = find_smallest(start->left, comp_axis);
-	node_t* rc = find_smallest(start->right, comp_axis);
 	node_t* replacement = start;
-	if (lc != NULL && replacement->value[comp_axis] > lc->value[comp_axis]) {
-		replacement = lc;
-	}
-	if (rc != NULL && replacement->value[comp_axis] > rc->value[comp_axis]) {
-		replacement = rc;
+	int idx_smallest = idx;
+	for (int i = 0; i < config.fanout; i++) {
+		node_t* probe = get_child(start, i);
+		if (is_null(probe)) continue;
+		int idx;
+		node_t* cnode = find_smallest(probe, comp_axis, idx);
+		if (cnode->values[idx][comp_axis] <
+				replacement->values[idx_smallest][comp_axis]) {
+			replacement = cnode;
+			idx_smallest = idx;
+		}
 	}
 	return replacement;
-}*/
+}
 
 datatype_t smallest_distdiff_innode(
 		node_t* node, tuple_t& target) {
