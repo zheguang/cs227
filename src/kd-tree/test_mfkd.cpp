@@ -44,8 +44,8 @@ void experiment_randomnns(
 
 void testInsertRemove() {
 	cout << "Lets test kd's insert and remove\n";
-	int num_points = 50;
-	int dimension = 5;
+	int num_points = 20;
+	int dimension = 2;
 	int base = 1000;
 	int fanout = 3;
 	config_t config(
@@ -62,10 +62,14 @@ void testInsertRemove() {
 		points.push_back(tuple);
 		nodes.push_back(kdtree.insert(tuple, hmindex::HybridMemory::DRAM));
 	}
-	kdtree.display();
-	int num_trials = 100;
-	experiment_randomnns(&kdtree, points, num_trials, base); 
+	if (MFKD_DEBUG) {
+		kdtree.display();
+	}
+//	int num_trials = 100;
+//	experiment_randomnns(&kdtree, points, num_trials, base); 
 
+	kdtree.replace_node_value(kdtree.root, 1);
+	kdtree.display();
 /*	for (int i = 0; i < num_points; i++) {
 		remove_point_fr_pool(points, kdtree.root->value);
 		kdtree.remove(kdtree.root);

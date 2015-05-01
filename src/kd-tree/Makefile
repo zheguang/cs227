@@ -25,4 +25,4 @@ mfkd: mfkd-tree.o HybridMemory.o tuple.o
 	$(CC) $(CFLAGS) -o test_mfkd tuple.o mfkd-tree.o HybridMemory.o test_mfkd.cpp $(LDLIBS)
 
 clean: 
-	rm *.o a.out test_kd test_mfkd
+	rm *.o a.out test_kd test_mfkd 1

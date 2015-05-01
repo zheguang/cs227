@@ -10,7 +10,7 @@
 using std::cout;
 using namespace hmindex;
 
-const int MFKD_DEBUG = false;
+const int MFKD_DEBUG = true;
 const bool MFKD_KEY_SORTED = true;
 
 // Node of kd-tree
@@ -24,7 +24,6 @@ struct node_t {
 };
 
 // Class for kd-tree
-// TODO generalize tree's fanout
 class tree_t {
 public:
 	node_t* root;
@@ -36,6 +35,8 @@ public:
 	}
 
 	~tree_t();
+	
+	void replace_node_value(node_t* replaced, int vindex);
 
 	// Build a tree from a list of points, 
 	void buildfrom(vector<tuple_t>& points);
@@ -96,7 +97,7 @@ private:
 	void free_tree_helper(node_t* start);
 	void free_node(node_t* node);
 
-	node_t* find_replacement(node_t* replaced) const;
+//	node_t* find_replacement(node_t* replaced) const;
 	node_t* find_largest(node_t* start, int comp_axis, int& index_smallest) const;
 	node_t* find_smallest(node_t* start, int comp_axis, int& index_smallest) const;
 	int index_of_smallest(node_t* node, int axis) const;

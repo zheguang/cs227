@@ -316,18 +316,44 @@ node_t* tree_t::find_parent(
 	return NULL;
 }
 
-/*node_t* tree_t::find_replacement(node_t* replaced) const {
-	if (replaced == NULL) return NULL;
+void tree_t::replace_node_value(node_t* replaced, int vindex) {
+	if (replaced == NULL) return;
+	if (replaced ->num_children == 0) {
+		replaced->values.erase(replaced->values.begin() + vindex);
+		if (replaced->values.size() == 0) {
+			// TODO free replaced
+			replaced->parent->num_children--;
+		}
+		return;
+	}
 	int axis = replaced->depth % config.dimension;
-	if (replaced->right != NULL) {
-		return find_smallest(replaced->right, axis);
+	// Probe left
+	node_t* probe = NULL;
+	for (int c = vindex; c >= 0; c++) {
+		probe = get_child(replaced, c);
+		if (!is_null(probe)) break;
+		else probe = NULL;
 	}
-	if (replaced->left != NULL) {
-		return find_largest(replaced->left, axis);
+	if (probe != NULL) {
+		int index_largest;
+		node_t* r = find_largest(probe, axis, index_largest);
+		replaced->values[vindex] = r->values[index_largest];
+		return replace_node_value(r, index_largest);
 	}
-	// A leaf node
-	return replaced;
-}*/
+
+	// probe right
+	for (int c = vindex + 1; c < config.fanout; c++) {
+		probe = get_child(replaced, c);
+		if (!is_null(probe)) break;
+		else probe = NULL;
+	}
+	assert(probe != NULL);
+	int index_smallest;
+	node_t* r = find_smallest(probe, axis, index_smallest);
+	replaced->values[vindex] = r->values[index_smallest];
+	return replace_node_value(r, index_smallest);
+}
+
 
 int tree_t::index_of_largest(node_t* node, int axis) const {
 	if (node->depth % config.dimension == axis) return node->values.size()-1;

@@ -60,14 +60,14 @@ void testInsertRemove() {
 	int num_trials = 100;
 	experiment_randomnns(&kdtree, points, num_trials, base); 
 
-	/*for (int i = 0; i < num_points; i++) {
+	for (int i = 0; i < num_points; i++) {
 		remove_point_fr_pool(points, kdtree.root->value);
 		kdtree.remove(kdtree.root);
 		if (kdtree.root != NULL) {
 			experiment_randomnns(&kdtree, points, num_trials, 2*base); 
 		}
 	}
-	assert(kdtree.root == NULL);*/
+	assert(kdtree.root == NULL);
 }
 
 
