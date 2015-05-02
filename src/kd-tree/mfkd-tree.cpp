@@ -112,21 +112,20 @@ node_t* tree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
 //      KDTREE PRIVATE FUNCTIONS
 //===========================================================
 
-/*void tree_t::free_node(node_t* node) {
-	void* children = node->children;
-	// Free node itself
+void tree_t::free_children(node_t* parent) {
+	void* children = parent->children;
 	try{ 
-		HybridMemory::assertAddress(node, HybridMemory::DRAM);
-		HybridMemory::free(node, sizeof(node_t), HybridMemory::DRAM);
+		HybridMemory::assertAddress(children, HybridMemory::DRAM);
+		HybridMemory::free(children, nodesize * config.fanout, HybridMemory::DRAM);
 	} catch (FatalError& err) {
 		try {
-			HybridMemory::assertAddress(node, HybridMemory::NVM);
-			HybridMemory::free(node, sizeof(node_t), HybridMemory::NVM);
+			HybridMemory::assertAddress(children, HybridMemory::NVM);
+			HybridMemory::free(children, nodesize * config.fanout, HybridMemory::NVM);
 		} catch (FatalError& err) {
-			cout << "Encounter invalid memory type " << node << "\n";
+			cout << "Encounter invalid memory type " << (node_t*)children << "\n";
 		}
 	}
-}*/
+}
 
 void tree_t::free_tree_helper(node_t* start) {
 //	if (start->left != NULL) free_tree_helper(start->left);
@@ -321,8 +320,10 @@ void tree_t::replace_node_value(node_t* replaced, int vindex) {
 	if (replaced ->num_children == 0) {
 		replaced->values.erase(replaced->values.begin() + vindex);
 		if (replaced->values.size() == 0) {
-			// TODO free replaced
 			replaced->parent->num_children--;
+			if (replaced->parent->num_children == 0) {
+				free_children(replaced->parent);
+			}
 		}
 		return;
 	}

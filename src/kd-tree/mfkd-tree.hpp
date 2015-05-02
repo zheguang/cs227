@@ -96,6 +96,7 @@ private:
 	// Helper function for destructor
 	void free_tree_helper(node_t* start);
 	void free_node(node_t* node);
+	void free_children(node_t* parent);
 
 //	node_t* find_replacement(node_t* replaced) const;
 	node_t* find_largest(node_t* start, int comp_axis, int& index_smallest) const;
