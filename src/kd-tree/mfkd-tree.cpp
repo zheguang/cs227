@@ -342,7 +342,7 @@ void tree_t::replace_node_value(node_t* replaced, int vindex) {
 		return replace_node_value(r, index_largest);
 	}
 
-	// probe right
+	// Probe right
 	for (int c = vindex + 1; c < config.fanout; c++) {
 		probe = get_child(replaced, c);
 		if (!is_null(probe)) break;
@@ -377,7 +377,13 @@ node_t* tree_t::find_largest(node_t* start, int comp_axis, int& index) const {
 		node_t* probe = NULL;
 		for (int i = config.fanout - 1; i >= 0; i--) {
 			probe = get_child(start, i);
-			if (!is_null(probe)) break;
+			if (!is_null(probe)) {
+				if (probe->childindex <= idx) {
+					probe = NULL;
+				}
+				break;
+			}
+			else probe = NULL;
 		}
 		if (probe == NULL) {
 			index = idx;
@@ -423,7 +429,13 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis, int& index) const {
 		node_t* probe = NULL;
 		for (int i = 0; i < config.fanout; i++) {
 			probe = get_child(start, i);
-			if (!is_null(probe)) break;
+			if (!is_null(probe)) {
+				if (probe->childindex > idx) {
+					probe = NULL;
+				}
+				break;
+			}
+			else probe = NULL;
 		}
 		if (probe == NULL) {
 			index = idx;

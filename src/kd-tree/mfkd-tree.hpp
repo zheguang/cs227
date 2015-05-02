@@ -37,6 +37,10 @@ public:
 	~tree_t();
 	
 	void replace_node_value(node_t* replaced, int vindex);
+	node_t* find_largest(node_t* start, int comp_axis, int& index_smallest) const;
+	node_t* find_smallest(node_t* start, int comp_axis, int& index_smallest) const;
+	int index_of_smallest(node_t* node, int axis) const;
+	int index_of_largest(node_t* node, int axis) const;
 
 	// Build a tree from a list of points, 
 	void buildfrom(vector<tuple_t>& points);
@@ -99,9 +103,5 @@ private:
 	void free_children(node_t* parent);
 
 //	node_t* find_replacement(node_t* replaced) const;
-	node_t* find_largest(node_t* start, int comp_axis, int& index_smallest) const;
-	node_t* find_smallest(node_t* start, int comp_axis, int& index_smallest) const;
-	int index_of_smallest(node_t* node, int axis) const;
-	int index_of_largest(node_t* node, int axis) const;
 };
 #endif

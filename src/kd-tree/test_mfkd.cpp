@@ -68,8 +68,12 @@ void testInsertRemove() {
 //	int num_trials = 100;
 //	experiment_randomnns(&kdtree, points, num_trials, base); 
 
+//	kdtree.replace_node_value(kdtree.root, 1);
+	remove_point_fr_pool(points, kdtree.root->values[1]);
 	kdtree.replace_node_value(kdtree.root, 1);
 	kdtree.display();
+	int num_trials = 100;
+	experiment_randomnns(&kdtree, points, num_trials, base); 
 /*	for (int i = 0; i < num_points; i++) {
 		remove_point_fr_pool(points, kdtree.root->value);
 		kdtree.remove(kdtree.root);
