@@ -65,23 +65,28 @@ void testInsertRemove() {
 	if (MFKD_DEBUG) {
 		kdtree.display();
 	}
-//	int num_trials = 100;
+	int num_trials = 1;
 //	experiment_randomnns(&kdtree, points, num_trials, base); 
 
 //	kdtree.replace_node_value(kdtree.root, 1);
-	remove_point_fr_pool(points, kdtree.root->values[1]);
-	kdtree.replace_node_value(kdtree.root, 1);
+/*	remove_point_fr_pool(points, kdtree.root->values[0]);
+	kdtree.replace_node_value(kdtree.root, 0);
 	kdtree.display();
 	int num_trials = 100;
 	experiment_randomnns(&kdtree, points, num_trials, base); 
-/*	for (int i = 0; i < num_points; i++) {
-		remove_point_fr_pool(points, kdtree.root->value);
+*/
+	while (kdtree.root != NULL) {
+		for (unsigned int i = 0; i < kdtree.root->values.size(); i++) {
+			remove_point_fr_pool(points, kdtree.root->values[i]);
+		}
 		kdtree.remove(kdtree.root);
+		if (MFKD_DEBUG) {
+			kdtree.display();
+		}
 		if (kdtree.root != NULL) {
 			experiment_randomnns(&kdtree, points, num_trials, 2*base); 
 		}
 	}
-	assert(kdtree.root == NULL);*/
 }
 
 

@@ -64,39 +64,23 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	return newnode;
 }
 	
-/*void tree_t::remove(node_t* node) {
+void tree_t::remove(node_t* node) {
 	if (node == NULL) return;
+	unsigned int i = 0;
 	if (node->num_children == 0) {
-		if (node == root) {
-			root = NULL;
-		} else {
-			memset(node, 0, nodesize);
-			node->parent->num_children--;
-			if (node->parent->num_children == 0) {
-				
-			}
-		}
-		
-	} 
-	
-	if (node->left == NULL && node->right == NULL) {
-		if (node == root) {
+		if (node->parent == NULL) {
 			root = NULL;
 			free_node(node);
 			return;
 		}
-		if (node == node->parent->left) {
-			node->parent->left = NULL;
-		} else {
-			node->parent->right = NULL;
-		}
-		free_node(node);
+		memset(node, 0, nodesize);
 		return;
 	}
-	node_t* replacement = find_replacement(node);
-	node->value = replacement->value;
-	remove(replacement);
-}*/
+	while (i < node->values.size()) { // TODO might have bug remove root
+		replace_node_value(node, i);
+		i++;
+	}
+}
 
 
 void tree_t::display() const {
@@ -112,9 +96,24 @@ node_t* tree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
 //      KDTREE PRIVATE FUNCTIONS
 //===========================================================
 
+void tree_t::free_node(node_t* node) {
+	try { 
+		HybridMemory::assertAddress(node, HybridMemory::DRAM);
+		HybridMemory::free(node, nodesize, HybridMemory::DRAM);
+	} catch (FatalError& err) {
+		try {
+			HybridMemory::assertAddress(node, HybridMemory::NVM);
+			HybridMemory::free(node, nodesize, HybridMemory::NVM);
+		} catch (FatalError& err) {
+			cout << "Encounter invalid memory type " << node << "\n";
+		}
+	} 
+}
+
 void tree_t::free_children(node_t* parent) {
+	if (parent == NULL) return;
 	void* children = parent->children;
-	try{ 
+	try { 
 		HybridMemory::assertAddress(children, HybridMemory::DRAM);
 		HybridMemory::free(children, nodesize * config.fanout, HybridMemory::DRAM);
 	} catch (FatalError& err) {
@@ -163,7 +162,10 @@ bool tree_t::shouldbe_inmemory(int h, int d) const {
 
 node_t* tree_t::get_child(node_t* parent, int index) const {
 	if (index >= config.fanout) {
-		throw "bad";
+		if (MFKD_DEBUG) {
+			cout << "bad get child for " << parent << " at " << index << "\n";
+		}
+		throw -1;
 	}
 	char* ptr = (char*)parent->children;
 	for (int i = 0; i < index; i++) {
@@ -320,17 +322,26 @@ void tree_t::replace_node_value(node_t* replaced, int vindex) {
 	if (replaced ->num_children == 0) {
 		replaced->values.erase(replaced->values.begin() + vindex);
 		if (replaced->values.size() == 0) {
+			if (replaced->parent == NULL) {
+				assert(replaced == root);
+				free_node(replaced);
+				root = NULL;
+				return;
+			}
 			replaced->parent->num_children--;
 			if (replaced->parent->num_children == 0) {
 				free_children(replaced->parent);
+				return;
 			}
+			node_t* rstart = get_child(replaced->parent, replaced->childindex);
+			memset(rstart, 0, nodesize);
 		}
 		return;
 	}
 	int axis = replaced->depth % config.dimension;
 	// Probe left
 	node_t* probe = NULL;
-	for (int c = vindex; c >= 0; c++) {
+	for (int c = vindex; c >= 0; c--) {
 		probe = get_child(replaced, c);
 		if (!is_null(probe)) break;
 		else probe = NULL;
