@@ -24,5 +24,9 @@ mfkd-tree.o: mfkd-tree.cpp
 mfkd: mfkd-tree.o HybridMemory.o tuple.o
 	$(CC) $(CFLAGS) -o test_mfkd tuple.o mfkd-tree.o HybridMemory.o test_mfkd.cpp $(LDLIBS)
 
+compare: mfkd-tree.o kd-tree.o tuple.o HybridMemory.o
+	$(CC) $(CFLAGS) -o compare tuple.o kd-tree.o mfkd-tree.o HybridMemory.o compare.cpp $(LDLIBS)
+	
+
 clean: 
 	rm *.o a.out test_kd test_mfkd 1

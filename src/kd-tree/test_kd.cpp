@@ -38,6 +38,16 @@ void experiment_randomnns(
 	}
 }
 
+void experiment_inputnns(
+		tree_t* kdtree, vector<tuple_t>& points) {
+	node_t* nearest = NULL;
+	for (unsigned int i = 0; i < points.size(); i++) {
+		tuple_t target = points[i];
+		nearest = kdtree->search_nearest(target);
+		assert(nearest != NULL);
+	}
+}
+
 void testInsertRemove() {
 	cout << "Lets test kd's insert and remove\n";
 	int num_points = 10;
@@ -74,9 +84,9 @@ void testInsertRemove() {
 void testSingleDimension(string pathname) {
 	cout << "Test for single dimension\n";
 	int dimension = 1;
-	int fanout = 2; // XXX fanout must be 2 at this point!!!
-	int num_trials = 1;
-	int base = 2000;
+	int fanout = 2; // fanout must be 2
+	int num_trials = 2000;
+	int base = 200000;
 	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
 	config_t config(
 			dimension, 
@@ -85,27 +95,21 @@ void testSingleDimension(string pathname) {
 			fanout);
 	tuple_t target(dimension);
 	
-	double percentile = 1.0;
-	while (percentile >= 0.0) {
-		config.value = percentile;
-		tree_t bst(config);
-		time_t tstart = time(0);
-		bst.buildfrom(points);
-		time_t tend = time(0);
-		cout << "finished building the tree. Used ";
-		cout << difftime(tend, tstart) << "s\n";
-		if (KD_DEBUG) {
-			bst.display();
-		}
-		// Test knn search
-		cout << "start nns...\n";
-		tstart = time(0);
-		experiment_randomnns(&bst, points, num_trials, base);
-		tend = time(0);
-		cout << "finished nns of " << percentile << " ";
-		cout << "Used: "<< difftime(tend, tstart) << "s\n";
-		percentile -= 0.5;
+	tree_t bst(config);
+	time_t tstart = time(0);
+	bst.buildfrom(points);
+	time_t tend = time(0);
+	cout << "finished building the tree. Used ";
+	cout << difftime(tend, tstart) << "s\n";
+	if (KD_DEBUG) {
+		bst.display();
 	}
+	// Test knn search
+	cout << "start nns...\n";
+	tstart = time(0);
+	experiment_randomnns(&bst, points, num_trials, base);
+	tend = time(0);
+	cout << "Used: "<< difftime(tend, tstart) << "s\n";
 }
 
 
@@ -118,7 +122,7 @@ void testMultipleDimension(string pathname) {
 	config_t config(
 			dimension, 
 			BY_PERCENTILE,
-			0.5, // Let half of the tree in memory
+			0.99, // Let half of the tree in memory
 			fanout);
 	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
 	tuple_t target;
@@ -132,15 +136,39 @@ void testMultipleDimension(string pathname) {
 	experiment_randomnns(&kdtree, points, num_trials, base);
 }
 
+void testSpeed(string pathname, int dimension) {
+	cout << "Test for speed\n";
+	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
+	config_t config( dimension, BY_PERCENTILE, 0.0, 2);
+	tuple_t target(dimension);
+	
+	tree_t tree(config);
+	time_t tstart = time(0);
+	tree.buildfrom(points);
+	time_t tend = time(0);
+	cout << "finished building the tree. Used ";
+	cout << difftime(tend, tstart) << "s\n";
+	
+	// Test knn search
+	cout << "start nns...\n";
+	tstart = time(0);
+	experiment_inputnns(&tree, points);
+	tend = time(0);
+	cout << "Used: "<< difftime(tend, tstart) << "s\n";
+}
 
 int main(int argc, char** argv) {
-	if (argc != 2) {
-		cout << "Please define a data source\n";
+	if (argc != 3) {
+		cout << "Please define a data source and dimension\n";
 		exit(1);
 	}
 	string filename(argv[1]);
 	cout << "build tree from " << filename << "\n";
-	testInsertRemove();
+	int dimension = atoi(argv[2]);
+	testSpeed(filename, dimension);
+
+
+//	testInsertRemove();
 //	testSingleDimension(filename);
 //	testMultipleDimension(filename);
 	return 0;

@@ -10,51 +10,51 @@
 using std::cout;
 using namespace hmindex;
 
-const int MFKD_DEBUG = true;
+const int MFKD_DEBUG = false;
 const bool MFKD_KEY_SORTED = true;
 
 // Node of kd-tree
-struct node_t {
+struct csmfnode_t {
 	int depth; // Depth of node in the tree
 	int num_children;
 	int childindex; // Number-th of child of its parent
 	void* children;
-	node_t* parent;
+	csmfnode_t* parent;
 	vector<tuple_t> values;
 };
 
 // Class for kd-tree
-class tree_t {
+class csmftree_t {
 public:
-	node_t* root;
-	tree_t(config_t& config) : 
+	csmfnode_t* root;
+	csmftree_t(config_t& config) : 
 			root(NULL), 
 			config(config) {
-		nodesize = sizeof(node_t) +
+		nodesize = sizeof(csmfnode_t) +
 				sizeof(datatype_t) * config.dimension * (config.fanout - 1);
 	}
 
-	~tree_t();
+	~csmftree_t();
 	
-	void replace_node_value(node_t* replaced, int vindex);
-	node_t* find_largest(node_t* start, int comp_axis, int& index_smallest) const;
-	node_t* find_smallest(node_t* start, int comp_axis, int& index_smallest) const;
-	int index_of_smallest(node_t* node, int axis) const;
-	int index_of_largest(node_t* node, int axis) const;
+	void replace_node_value(csmfnode_t* replaced, int vindex);
+	csmfnode_t* find_largest(csmfnode_t* start, int comp_axis, int& index_smallest) const;
+	csmfnode_t* find_smallest(csmfnode_t* start, int comp_axis, int& index_smallest) const;
+	int index_of_smallest(csmfnode_t* node, int axis) const;
+	int index_of_largest(csmfnode_t* node, int axis) const;
 
 	// Build a tree from a list of points, 
 	void buildfrom(vector<tuple_t>& points);
 
-	node_t* insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
+	csmfnode_t* insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
 
-	void remove(node_t* node);
+	void remove(csmfnode_t* node);
 
   // Search nearest neighbor
-	node_t* search_nearest(tuple_t& target, datatype_t& sdist) const;
+	csmfnode_t* search_nearest(tuple_t& target, datatype_t& sdist) const;
 	
 	// Print the kd-tree
 	void display() const; 
-	void print_node(node_t* node) const;
+	void print_node(csmfnode_t* node) const;
 
 	int get_dimension() const {
 		return config.dimension;
@@ -79,29 +79,29 @@ private:
 	bool shouldbe_inmemory(int h, int d) const;
 	
 	// Insert newnode into children nodes of parent at childindex
-	node_t* get_child(node_t* parent, int index) const;
+	csmfnode_t* get_child(csmfnode_t* parent, int index) const;
 	
-	bool is_null(node_t* node) const;
+	bool is_null(csmfnode_t* node) const;
 
-	node_t* buildfrom_helper(
+	csmfnode_t* buildfrom_helper(
 			vector<tuple_t>& points,
-			int lbd, int rbd, int depth, node_t* parent, int childindex) const;
+			int lbd, int rbd, int depth, csmfnode_t* parent, int childindex) const;
 	
 	//XXX Find parent of tuple if it to be inserted into tree rooted at starter
 	// is_left_child is true if tuple if inserted will be parent's left child
-	node_t* find_parent(
-			node_t* starter, tuple_t& tuple, int& willbe_child) const;
+	csmfnode_t* find_parent(
+			csmfnode_t* starter, tuple_t& tuple, int& willbe_child) const;
 	
-	void display_helper(node_t* node, string label) const;
+	void display_helper(csmfnode_t* node, string label) const;
  	
-	node_t* search_nearest_helper(
-			node_t* starter, tuple_t& target, datatype_t& sdist) const;
+	csmfnode_t* search_nearest_helper(
+			csmfnode_t* starter, tuple_t& target, datatype_t& sdist) const;
 
 	// Helper function for destructor
-	void free_tree_helper(node_t* start);
-	void free_node(node_t* node);
-	void free_children(node_t* parent);
+	void free_tree_helper(csmfnode_t* start);
+	void free_node(csmfnode_t* node);
+	void free_children(csmfnode_t* parent);
 
-//	node_t* find_replacement(node_t* replaced) const;
+//	csmfnode_t* find_replacement(csmfnode_t* replaced) const;
 };
 #endif

@@ -15,19 +15,19 @@
 //===========================================================
 
 /* A deconstructor to free all memory allocated */
-tree_t::~tree_t() {
+csmftree_t::~csmftree_t() {
 	if (root == NULL) return;
 	free_tree_helper(root);
 }
 
-void tree_t::buildfrom(vector<tuple_t>& points) {
+void csmftree_t::buildfrom(vector<tuple_t>& points) {
 	check_config(points.size());
 	root = buildfrom_helper(points, 0, points.size()-1, 0, NULL, 0);
 }
 
-node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
+csmfnode_t* csmftree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 	if (root == NULL) {
-		node_t* newnode = (node_t*)HybridMemory::alloc(nodesize, type);
+		csmfnode_t* newnode = (csmfnode_t*)HybridMemory::alloc(nodesize, type);
 		memset(newnode, 0, nodesize); 
 		newnode->values.push_back(tuple);
 		newnode->parent = NULL;
@@ -35,7 +35,7 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 		return newnode;
 	}
 	int willbe_child = -1;
-	node_t* parent = find_parent(root, tuple, willbe_child);
+	csmfnode_t* parent = find_parent(root, tuple, willbe_child);
 	if (parent == NULL) {
 		cout << "bad\n";
 	}
@@ -55,18 +55,25 @@ node_t* tree_t::insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type) {
 		parent->children = HybridMemory::alloc(nodesize * config.fanout, type);
 		memset(parent->children, 0, nodesize * config.fanout);
 	}
-	node_t* newnode = get_child(parent, willbe_child);
+	csmfnode_t* newnode = get_child(parent, willbe_child);
 	newnode->parent = parent;
 	newnode->depth = parent->depth + 1;
 	newnode->childindex = willbe_child;
 	parent->num_children++;
-	newnode->values.push_back(tuple);
+	if (newnode->values.size() == 0) {
+		newnode->values.push_back(tuple);
+	} else{
+		int axis = newnode->depth % config.dimension;
+		unsigned int i = 0;
+		while (i < newnode->values.size() &&
+				newnode->values[i][axis] < tuple[axis]) i++;
+		newnode->values.insert(newnode->values.begin() + i, tuple);
+	}
 	return newnode;
 }
 	
-void tree_t::remove(node_t* node) {
+void csmftree_t::remove(csmfnode_t* node) {
 	if (node == NULL) return;
-	unsigned int i = 0;
 	if (node->num_children == 0) {
 		if (node->parent == NULL) {
 			root = NULL;
@@ -76,19 +83,20 @@ void tree_t::remove(node_t* node) {
 		memset(node, 0, nodesize);
 		return;
 	}
-	while (i < node->values.size()) { // TODO might have bug remove root
+	unsigned int i = 0;
+	while (i < node->values.size()) {
 		replace_node_value(node, i);
 		i++;
 	}
 }
 
 
-void tree_t::display() const {
+void csmftree_t::display() const {
 	cout << "kd-tree: \n";
 	display_helper(root, "root<0>: ");
 }
 
-node_t* tree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
+csmfnode_t* csmftree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
 	return search_nearest_helper(root, target, sdist);
 }
 
@@ -96,7 +104,7 @@ node_t* tree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
 //      KDTREE PRIVATE FUNCTIONS
 //===========================================================
 
-void tree_t::free_node(node_t* node) {
+void csmftree_t::free_node(csmfnode_t* node) {
 	try { 
 		HybridMemory::assertAddress(node, HybridMemory::DRAM);
 		HybridMemory::free(node, nodesize, HybridMemory::DRAM);
@@ -110,7 +118,7 @@ void tree_t::free_node(node_t* node) {
 	} 
 }
 
-void tree_t::free_children(node_t* parent) {
+void csmftree_t::free_children(csmfnode_t* parent) {
 	if (parent == NULL) return;
 	void* children = parent->children;
 	try { 
@@ -121,18 +129,18 @@ void tree_t::free_children(node_t* parent) {
 			HybridMemory::assertAddress(children, HybridMemory::NVM);
 			HybridMemory::free(children, nodesize * config.fanout, HybridMemory::NVM);
 		} catch (FatalError& err) {
-			cout << "Encounter invalid memory type " << (node_t*)children << "\n";
+			cout << "Encounter invalid memory type " << (csmfnode_t*)children << "\n";
 		}
 	}
 }
 
-void tree_t::free_tree_helper(node_t* start) {
+void csmftree_t::free_tree_helper(csmfnode_t* start) {
 //	if (start->left != NULL) free_tree_helper(start->left);
 //	if (start->right != NULL) free_tree_helper(start->right);
 //	free_node(start);
 }
 
-void tree_t::check_config(int num_points) {
+void csmftree_t::check_config(int num_points) {
 	switch (config.policy) {
 		case BY_HEIGHT_FROM_BOTTOM:
 			nvm_level = config.value;
@@ -149,7 +157,7 @@ void tree_t::check_config(int num_points) {
 	} // Switch
 }
 
-bool tree_t::shouldbe_inmemory(int h, int d) const {
+bool csmftree_t::shouldbe_inmemory(int h, int d) const {
 	switch (config.policy) {
 		case BY_HEIGHT_FROM_BOTTOM:
 			return h > nvm_level;
@@ -160,7 +168,7 @@ bool tree_t::shouldbe_inmemory(int h, int d) const {
 	}
 }
 
-node_t* tree_t::get_child(node_t* parent, int index) const {
+csmfnode_t* csmftree_t::get_child(csmfnode_t* parent, int index) const {
 	if (index >= config.fanout) {
 		if (MFKD_DEBUG) {
 			cout << "bad get child for " << parent << " at " << index << "\n";
@@ -171,13 +179,13 @@ node_t* tree_t::get_child(node_t* parent, int index) const {
 	for (int i = 0; i < index; i++) {
 		for (int k = 0; k < nodesize; k++) ptr++;
 	}
-	return (node_t*)ptr;
+	return (csmfnode_t*)ptr;
 }
 
 // Base on pesudo-code on wikipedia
-node_t* tree_t::buildfrom_helper(
+csmfnode_t* csmftree_t::buildfrom_helper(
 		vector<tuple_t>& points,
-		int lbd, int rbd, int depth, node_t* parent, int childindex) const {
+		int lbd, int rbd, int depth, csmfnode_t* parent, int childindex) const {
 	if (lbd > rbd) return NULL;
 	
 	// Assume key all sorted at this point
@@ -192,7 +200,7 @@ node_t* tree_t::buildfrom_helper(
 			if (lbd + index > rbd) break;
 		}
 	}
-	node_t* newnode = NULL;
+	csmfnode_t* newnode = NULL;
 	int height = bottomheight(rbd - lbd + 1, config.fanout);
 	if (parent != NULL) {
 		if (parent->num_children == 0) {
@@ -209,11 +217,11 @@ node_t* tree_t::buildfrom_helper(
 		parent->num_children++;
 	} else {
 		if (shouldbe_inmemory(depth, height)) {
-			newnode = (node_t*)HybridMemory::alloc(
-					sizeof(node_t), HybridMemory::DRAM);
+			newnode = (csmfnode_t*)HybridMemory::alloc(
+					sizeof(csmfnode_t), HybridMemory::DRAM);
 		} else {
-			newnode = (node_t*)HybridMemory::alloc(
-					sizeof(node_t), HybridMemory::NVM);
+			newnode = (csmfnode_t*)HybridMemory::alloc(
+					sizeof(csmfnode_t), HybridMemory::NVM);
 		}
 		memset(newnode, 0, nodesize);
 	}
@@ -239,7 +247,7 @@ node_t* tree_t::buildfrom_helper(
 	return newnode;
 }
 
-bool tree_t::is_null(node_t* node) const {
+bool csmftree_t::is_null(csmfnode_t* node) const {
 	char* nullchild = (char*)malloc(nodesize);
 	memset(nullchild, 0, nodesize);
 	int ret = strncmp((char*)node, nullchild, nodesize);
@@ -247,7 +255,7 @@ bool tree_t::is_null(node_t* node) const {
 	return ret == 0;
 }
 
-void tree_t::print_node(node_t* node) const {
+void csmftree_t::print_node(csmfnode_t* node) const {
 	for (unsigned int i = 0; i < node->values.size() - 1; i++) {
 		cout << tuple_string(node->values[i]) << "|";
 	} cout << tuple_string(node->values.back());
@@ -258,13 +266,13 @@ void tree_t::print_node(node_t* node) const {
 	} cout << "\n";
 }
 
-void tree_t::display_helper(node_t* node, string label) const {
+void csmftree_t::display_helper(csmfnode_t* node, string label) const {
 	if (node == NULL) return;
 	cout << string(2*node->depth, ' ') << label;
 	print_node(node);
 	if (node->num_children == 0) return;
 	for (int i = 0; i < config.fanout; i++) {
-		node_t* child = get_child(node, i);
+		csmfnode_t* child = get_child(node, i);
 		bool isnull = is_null(child);
 		if (!isnull) {
 			int axis = child->depth % config.dimension;
@@ -275,10 +283,10 @@ void tree_t::display_helper(node_t* node, string label) const {
 	}
 }
 
-node_t* tree_t::find_parent(
-		node_t* starter, tuple_t& target, int& willbe_child) const {
+csmfnode_t* csmftree_t::find_parent(
+		csmfnode_t* starter, tuple_t& target, int& willbe_child) const {
 	if (starter == NULL) return NULL;
-	node_t* key = starter;
+	csmfnode_t* key = starter;
 	while (true) {
 	search:
 		for (unsigned int i = 0; i < key->values.size(); i++) {
@@ -298,7 +306,7 @@ node_t* tree_t::find_parent(
 		}
 		for (unsigned int i = 0; i < key->values.size(); i++) {
 			if (target[axis] < key->values[i][axis]) {
-				node_t* child = get_child(key, i);
+				csmfnode_t* child = get_child(key, i);
 				if (is_null(child)) {
 					willbe_child = i;
 					return key;
@@ -307,7 +315,7 @@ node_t* tree_t::find_parent(
 				goto search;
 			}
 		}
-		node_t* lastchild = get_child(key, key->values.size());
+		csmfnode_t* lastchild = get_child(key, key->values.size());
 		if (is_null(lastchild)) {
 			willbe_child = (int)key->values.size();
 			return key;
@@ -317,7 +325,7 @@ node_t* tree_t::find_parent(
 	return NULL;
 }
 
-void tree_t::replace_node_value(node_t* replaced, int vindex) {
+void csmftree_t::replace_node_value(csmfnode_t* replaced, int vindex) {
 	if (replaced == NULL) return;
 	if (replaced ->num_children == 0) {
 		replaced->values.erase(replaced->values.begin() + vindex);
@@ -333,14 +341,14 @@ void tree_t::replace_node_value(node_t* replaced, int vindex) {
 				free_children(replaced->parent);
 				return;
 			}
-			node_t* rstart = get_child(replaced->parent, replaced->childindex);
+			csmfnode_t* rstart = get_child(replaced->parent, replaced->childindex);
 			memset(rstart, 0, nodesize);
 		}
 		return;
 	}
 	int axis = replaced->depth % config.dimension;
 	// Probe left
-	node_t* probe = NULL;
+	csmfnode_t* probe = NULL;
 	for (int c = vindex; c >= 0; c--) {
 		probe = get_child(replaced, c);
 		if (!is_null(probe)) break;
@@ -348,7 +356,7 @@ void tree_t::replace_node_value(node_t* replaced, int vindex) {
 	}
 	if (probe != NULL) {
 		int index_largest;
-		node_t* r = find_largest(probe, axis, index_largest);
+		csmfnode_t* r = find_largest(probe, axis, index_largest);
 		replaced->values[vindex] = r->values[index_largest];
 		return replace_node_value(r, index_largest);
 	}
@@ -361,13 +369,13 @@ void tree_t::replace_node_value(node_t* replaced, int vindex) {
 	}
 	assert(probe != NULL);
 	int index_smallest;
-	node_t* r = find_smallest(probe, axis, index_smallest);
+	csmfnode_t* r = find_smallest(probe, axis, index_smallest);
 	replaced->values[vindex] = r->values[index_smallest];
 	return replace_node_value(r, index_smallest);
 }
 
 
-int tree_t::index_of_largest(node_t* node, int axis) const {
+int csmftree_t::index_of_largest(csmfnode_t* node, int axis) const {
 	if (node->depth % config.dimension == axis) return node->values.size()-1;
 	int ret = 0;
 	for (unsigned int i = 1; i < node->values.size(); i++) {
@@ -376,7 +384,7 @@ int tree_t::index_of_largest(node_t* node, int axis) const {
 	return ret;
 }
 
-node_t* tree_t::find_largest(node_t* start, int comp_axis, int& index) const {
+csmfnode_t* csmftree_t::find_largest(csmfnode_t* start, int comp_axis, int& index) const {
 	if (start == NULL) return start;
 	int idx =	index_of_largest(start, comp_axis);
 	if (start->num_children == 0) {
@@ -385,7 +393,7 @@ node_t* tree_t::find_largest(node_t* start, int comp_axis, int& index) const {
 	}
 	int axis = start->depth % config.dimension;
 	if (axis == comp_axis) {
-		node_t* probe = NULL;
+		csmfnode_t* probe = NULL;
 		for (int i = config.fanout - 1; i >= 0; i--) {
 			probe = get_child(start, i);
 			if (!is_null(probe)) {
@@ -402,13 +410,13 @@ node_t* tree_t::find_largest(node_t* start, int comp_axis, int& index) const {
 		}
 		return find_largest(probe, comp_axis, index);
 	}
-	node_t* replacement = start;
+	csmfnode_t* replacement = start;
 	int idx_largest = idx;
 	for (int i = 0; i < config.fanout; i++) {
-		node_t* probe = get_child(start, i);
+		csmfnode_t* probe = get_child(start, i);
 		if (is_null(probe)) continue;
 		int idx;
-		node_t* cnode = find_largest(probe, comp_axis, idx);
+		csmfnode_t* cnode = find_largest(probe, comp_axis, idx);
 		if (cnode->values[idx][comp_axis] >
 				replacement->values[idx_largest][comp_axis]) {
 			replacement = cnode;
@@ -419,7 +427,7 @@ node_t* tree_t::find_largest(node_t* start, int comp_axis, int& index) const {
 	return replacement;
 }
 
-int tree_t::index_of_smallest(node_t* node, int axis) const {
+int csmftree_t::index_of_smallest(csmfnode_t* node, int axis) const {
 	if (node->depth % config.dimension == axis) return 0;
 	int ret = 0;
 	for (unsigned int i = 1; i < node->values.size(); i++) {
@@ -428,7 +436,7 @@ int tree_t::index_of_smallest(node_t* node, int axis) const {
 	return ret;
 }
 
-node_t* tree_t::find_smallest(node_t* start, int comp_axis, int& index) const {
+csmfnode_t* csmftree_t::find_smallest(csmfnode_t* start, int comp_axis, int& index) const {
 	if (start == NULL) return start;
 	int idx =	index_of_smallest(start, comp_axis);
 	if (start->num_children == 0) {
@@ -437,7 +445,7 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis, int& index) const {
 	}
 	int axis = start->depth % config.dimension;
 	if (axis == comp_axis) {
-		node_t* probe = NULL;
+		csmfnode_t* probe = NULL;
 		for (int i = 0; i < config.fanout; i++) {
 			probe = get_child(start, i);
 			if (!is_null(probe)) {
@@ -454,13 +462,13 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis, int& index) const {
 		}
 		return find_smallest(probe, comp_axis, index);
 	}
-	node_t* replacement = start;
+	csmfnode_t* replacement = start;
 	int idx_smallest = idx;
 	for (int i = 0; i < config.fanout; i++) {
-		node_t* probe = get_child(start, i);
+		csmfnode_t* probe = get_child(start, i);
 		if (is_null(probe)) continue;
 		int idx;
-		node_t* cnode = find_smallest(probe, comp_axis, idx);
+		csmfnode_t* cnode = find_smallest(probe, comp_axis, idx);
 		if (cnode->values[idx][comp_axis] <
 				replacement->values[idx_smallest][comp_axis]) {
 			replacement = cnode;
@@ -472,7 +480,7 @@ node_t* tree_t::find_smallest(node_t* start, int comp_axis, int& index) const {
 }
 
 datatype_t smallest_distdiff_innode(
-		node_t* node, tuple_t& target) {
+		csmfnode_t* node, tuple_t& target) {
 	datatype_t cur_dist = (datatype_t)LLONG_MAX;
 	for (unsigned int i = 0; i < node->values.size(); i++) {
 		cur_dist = std::min(cur_dist, distance(node->values[i], target));
@@ -480,25 +488,25 @@ datatype_t smallest_distdiff_innode(
 	return cur_dist;
 }
 
-node_t* tree_t::search_nearest_helper(
-		node_t* starter, tuple_t& target, datatype_t& sdist) const {
+csmfnode_t* csmftree_t::search_nearest_helper(
+		csmfnode_t* starter, tuple_t& target, datatype_t& sdist) const {
 	if (starter == NULL) return NULL;
 	int willbe_child = 0;
-	node_t* cur_best = find_parent(starter, target, willbe_child);
+	csmfnode_t* cur_best = find_parent(starter, target, willbe_child);
 	if (willbe_child == -1) {
 		sdist = 0;
 		return cur_best;
 	}
 
 	datatype_t cur_dist = smallest_distdiff_innode(cur_best, target);
-	node_t* p = cur_best;
+	csmfnode_t* p = cur_best;
 	if (cur_best->num_children != 0 ) {
 		for (int i = 0; i < config.fanout; i++) {
-			node_t* child = get_child(p, i);
+			csmfnode_t* child = get_child(p, i);
 			bool isnull = is_null(child);
 			if (isnull) continue;
 			datatype_t canddist;
-			node_t* candidate = search_nearest_helper(child, target, canddist);
+			csmfnode_t* candidate = search_nearest_helper(child, target, canddist);
 			if (canddist < cur_dist) {
 				cur_best = candidate;
 				cur_dist = canddist;
@@ -506,8 +514,8 @@ node_t* tree_t::search_nearest_helper(
 		}
 	}
 
-	node_t* key = cur_best->parent;
-	node_t* prev = cur_best;
+	csmfnode_t* key = cur_best->parent;
+	csmfnode_t* prev = cur_best;
 	int childindex = cur_best->childindex;
 	while (key != NULL && prev != starter) {
 		datatype_t d = smallest_distdiff_innode(key, target);
@@ -518,13 +526,13 @@ node_t* tree_t::search_nearest_helper(
 		int axis = key->depth % config.dimension;
 		// Probe left if there is any
 		for (int c = 0; c < childindex; c++) {
-			node_t* probe = get_child(key, c);
+			csmfnode_t* probe = get_child(key, c);
 			bool isnull = is_null(probe);
 			if (isnull) continue;
 			datatype_t distbd = abs(target[axis] - key->values[childindex-1][axis]);
 			if (cur_dist > distbd) {
 				datatype_t canddist;
-				node_t* candidate = search_nearest_helper(probe, target, canddist);
+				csmfnode_t* candidate = search_nearest_helper(probe, target, canddist);
 				if (canddist < cur_dist) {
 					cur_best = candidate;
 					cur_dist = canddist;
@@ -533,13 +541,13 @@ node_t* tree_t::search_nearest_helper(
 		}
 		// Probe right if there is any
 		for (int c = childindex+1; c <= (int)key->values.size(); c++) {
-			node_t* probe = get_child(key, c);
+			csmfnode_t* probe = get_child(key, c);
 			bool isnull = is_null(probe);
 			if (isnull) continue;
 			datatype_t distbd = abs(target[axis] - key->values[childindex][axis]);
 			if (cur_dist > distbd) {
 				datatype_t canddist;
-				node_t* candidate = search_nearest_helper(probe, target, canddist);
+				csmfnode_t* candidate = search_nearest_helper(probe, target, canddist);
 				if (canddist < cur_dist) {
 					cur_best = candidate;
 					cur_dist = canddist;

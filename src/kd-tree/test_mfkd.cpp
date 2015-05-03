@@ -22,9 +22,9 @@ bool is_nearest(vector<tuple_t>& points, tuple_t& target, datatype_t actual_sdis
 }
 
 void experiment_randomnns(
-		tree_t* kdtree, vector<tuple_t>& points,
+		csmftree_t* kdtree, vector<tuple_t>& points,
 		int num_trials, int randbase) {
-	node_t* nearest = NULL;
+	csmfnode_t* nearest = NULL;
 	for (int i = 0; i < num_trials; i++) {
 		tuple_t target = generate_tuple(kdtree->get_dimension(), randbase);		
 		if (MFKD_DEBUG) {
@@ -41,6 +41,17 @@ void experiment_randomnns(
 	}
 }
 
+void experiment_inputnns(
+		csmftree_t* kdtree, vector<tuple_t>& points) {
+	csmfnode_t* nearest = NULL;
+	for (unsigned int i = 0; i < points.size(); i++) {
+		tuple_t target = points[i];
+		datatype_t sdist;
+		nearest = kdtree->search_nearest(target, sdist);
+		assert(nearest != NULL);
+	}
+}
+
 
 void testInsertRemove() {
 	cout << "Lets test kd's insert and remove\n";
@@ -53,9 +64,9 @@ void testInsertRemove() {
 			BY_PERCENTILE,
 			1.0, // Useless here
 			fanout);
-	tree_t kdtree(config);
+	csmftree_t kdtree(config);
 	vector<tuple_t> points;
-	vector<node_t*> nodes;
+	vector<csmfnode_t*> nodes;
 	for (int i = 0; i < num_points; i++) {
 		tuple_t tuple = generate_tuple(dimension, base);
 		cout << "wt insert " << tuple_string(tuple) << "\n";
@@ -66,7 +77,7 @@ void testInsertRemove() {
 		kdtree.display();
 	}
 	int num_trials = 1;
-//	experiment_randomnns(&kdtree, points, num_trials, base); 
+	experiment_randomnns(&kdtree, points, num_trials, base); 
 
 //	kdtree.replace_node_value(kdtree.root, 1);
 /*	remove_point_fr_pool(points, kdtree.root->values[0]);
@@ -92,10 +103,10 @@ void testInsertRemove() {
 
 void testSingleAndMultDimension(string pathname) {
 	cout << "Test for single dimension\n";
-	int dimension = 4;
-	int fanout = 5;
-	int num_trials = 20;
-	int base = 200;
+	int dimension = 1;
+	int fanout = 10;
+	int num_trials = 2000;
+	int base = 200000;
 	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
 //	vector<tuple_t> points = generate_sortedtuples(dimension, 200);
 	config_t config(
@@ -105,7 +116,7 @@ void testSingleAndMultDimension(string pathname) {
 			fanout);
 	tuple_t target(dimension);
 	
-	tree_t tree(config);
+	csmftree_t tree(config);
 	time_t tstart = time(0);
 	tree.buildfrom(points);
 	time_t tend = time(0);
@@ -123,15 +134,41 @@ void testSingleAndMultDimension(string pathname) {
 	cout << "Used: "<< difftime(tend, tstart) << "s\n";
 }
 
+void testSpeed(string pathname, int dimension, int fanout) {
+	cout << "Test for speed\n";
+	vector<tuple_t> points = createTuplesFromFile(pathname, dimension); 
+	config_t config( dimension, BY_PERCENTILE, 0.0, fanout);
+	tuple_t target(dimension);
+	
+	csmftree_t tree(config);
+	time_t tstart = time(0);
+	tree.buildfrom(points);
+	time_t tend = time(0);
+	cout << "finished building the tree. Used ";
+	cout << difftime(tend, tstart) << "s\n";
+	
+	// Test knn search
+	cout << "start nns...\n";
+	tstart = time(0);
+	experiment_inputnns(&tree, points);
+	tend = time(0);
+	cout << "Used: "<< difftime(tend, tstart) << "s\n";
+}
 
 int main(int argc, char** argv) {
-	if (argc != 2) {
-		cout << "Please define a data source\n";
+	if (argc != 4) {
+		cout << "Please define a data source, dimension and fanout\n";
 		exit(1);
 	}
 	string filename(argv[1]);
+	int dimension = atoi(argv[2]);
+	int fanout = atoi(argv[3]);
 	cout << "build tree from " << filename << "\n";
-	testInsertRemove();
+	testSpeed(filename, dimension, fanout);
+	
+
+
+//	testInsertRemove();
 //	testSingleAndMultDimension(filename);
 	return 0;
 }

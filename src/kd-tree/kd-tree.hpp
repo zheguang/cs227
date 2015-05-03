@@ -48,7 +48,6 @@ public:
 	node_t* mf_insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
 
 	void remove(node_t* node);
-	void mf_remove(node_t* node);
 
   // Search nearest neighbor
 	node_t* search_nearest(tuple_t& target) const;
@@ -92,10 +91,8 @@ private:
 			node_t* starter, tuple_t& tuple, int& willbe_child) const;
 	
 	void display_helper(node_t* node, string label) const;
-	void mf_display_helper(node_t* node, string label) const;
  	
 	node_t* search_nearest_helper(node_t* starter, tuple_t& target) const;
-	node_t* mf_search_nearest_helper(node_t* starter, tuple_t& target) const;
 
 	// Helper function for destructor
 	void free_tree_helper(node_t* start);
@@ -104,9 +101,5 @@ private:
 	node_t* find_replacement(node_t* replaced) const;
 	node_t* find_largest(node_t* start, int comp_axis) const;
 	node_t* find_smallest(node_t* start, int comp_axis) const;
-
-	node_t* mf_find_replacement(node_t* replaced) const;
-	node_t* mf_find_largest(node_t* start, int comp_axis) const;
-	node_t* mf_find_smallest(node_t* start, int comp_axis) const;
 };
 #endif
