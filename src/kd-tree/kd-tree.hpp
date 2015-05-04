@@ -29,7 +29,6 @@ struct node_t {
 };
 
 // Class for kd-tree
-// TODO generalize tree's fanout
 class tree_t {
 public:
 	node_t* root;
@@ -45,7 +44,6 @@ public:
 	void buildfrom(vector<tuple_t>& points);
 
 	node_t* insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
-	node_t* mf_insert(tuple_t& tuple, HybridMemory::MEMORY_NODE_TYPE type);
 
 	void remove(node_t* node);
 

@@ -135,9 +135,13 @@ void csmftree_t::free_children(csmfnode_t* parent) {
 }
 
 void csmftree_t::free_tree_helper(csmfnode_t* start) {
-//	if (start->left != NULL) free_tree_helper(start->left);
-//	if (start->right != NULL) free_tree_helper(start->right);
-//	free_node(start);
+	if (start->num_children != 0) {
+		for (int i = 0; i < config.fanout; i++) {
+			csmfnode_t* child = get_child(start, i);
+			free_tree_helper(child);
+		}
+	}
+	free_node(start);
 }
 
 void csmftree_t::check_config(int num_points) {
@@ -525,7 +529,7 @@ csmfnode_t* csmftree_t::search_nearest_helper(
 		}
 		int axis = key->depth % config.dimension;
 		// Probe left if there is any
-		for (int c = 0; c < childindex; c++) {
+		for (int c = childindex - 1; c >= 0; c--) {
 			csmfnode_t* probe = get_child(key, c);
 			bool isnull = is_null(probe);
 			if (isnull) continue;
@@ -537,6 +541,8 @@ csmfnode_t* csmftree_t::search_nearest_helper(
 					cur_best = candidate;
 					cur_dist = canddist;
 				}
+			} else {
+				break;
 			}
 		}
 		// Probe right if there is any
@@ -552,6 +558,8 @@ csmfnode_t* csmftree_t::search_nearest_helper(
 					cur_best = candidate;
 					cur_dist = canddist;
 				}
+			} else {
+				break;
 			}
 		}
 		childindex = key->childindex;

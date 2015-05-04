@@ -164,12 +164,12 @@ int main(int argc, char** argv) {
 	}
 	string filename(argv[1]);
 	cout << "build tree from " << filename << "\n";
-	int dimension = atoi(argv[2]);
-	testSpeed(filename, dimension);
+//	int dimension = atoi(argv[2]);
+//	testSpeed(filename, dimension);
 
 
 //	testInsertRemove();
-//	testSingleDimension(filename);
+	testSingleDimension(filename);
 //	testMultipleDimension(filename);
 	return 0;
 }

@@ -161,14 +161,14 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 	string filename(argv[1]);
-	int dimension = atoi(argv[2]);
-	int fanout = atoi(argv[3]);
+//	int dimension = atoi(argv[2]);
+//	int fanout = atoi(argv[3]);
 	cout << "build tree from " << filename << "\n";
-	testSpeed(filename, dimension, fanout);
+//	testSpeed(filename, dimension, fanout);
 	
 
 
 //	testInsertRemove();
-//	testSingleAndMultDimension(filename);
+	testSingleAndMultDimension(filename);
 	return 0;
 }

@@ -1,6 +1,6 @@
 // @xl242
-#ifndef KD_TREE_H_
-#define KD_TREE_H_
+#ifndef MFKD_TREE_H_
+#define MFKD_TREE_H_
 
 #include <iostream>
 #include <string>
@@ -35,12 +35,6 @@ public:
 	}
 
 	~csmftree_t();
-	
-	void replace_node_value(csmfnode_t* replaced, int vindex);
-	csmfnode_t* find_largest(csmfnode_t* start, int comp_axis, int& index_smallest) const;
-	csmfnode_t* find_smallest(csmfnode_t* start, int comp_axis, int& index_smallest) const;
-	int index_of_smallest(csmfnode_t* node, int axis) const;
-	int index_of_largest(csmfnode_t* node, int axis) const;
 
 	// Build a tree from a list of points, 
 	void buildfrom(vector<tuple_t>& points);
@@ -87,8 +81,8 @@ private:
 			vector<tuple_t>& points,
 			int lbd, int rbd, int depth, csmfnode_t* parent, int childindex) const;
 	
-	//XXX Find parent of tuple if it to be inserted into tree rooted at starter
-	// is_left_child is true if tuple if inserted will be parent's left child
+	// Find parent of tuple if it to be inserted into tree rooted at starter
+	// willbe_child is the index of child node going to be
 	csmfnode_t* find_parent(
 			csmfnode_t* starter, tuple_t& tuple, int& willbe_child) const;
 	
@@ -102,6 +96,12 @@ private:
 	void free_node(csmfnode_t* node);
 	void free_children(csmfnode_t* parent);
 
-//	csmfnode_t* find_replacement(csmfnode_t* replaced) const;
+	void replace_node_value(csmfnode_t* replaced, int vindex);
+	csmfnode_t* find_largest(
+			csmfnode_t* start, int comp_axis, int& index_smallest) const;
+	csmfnode_t* find_smallest(
+			csmfnode_t* start, int comp_axis, int& index_smallest) const;
+	int index_of_smallest(csmfnode_t* node, int axis) const;
+	int index_of_largest(csmfnode_t* node, int axis) const;
 };
 #endif

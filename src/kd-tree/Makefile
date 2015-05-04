@@ -29,4 +29,4 @@ compare: mfkd-tree.o kd-tree.o tuple.o HybridMemory.o
 	
 
 clean: 
-	rm *.o a.out test_kd test_mfkd 1
+	rm *.o compare a.out test_kd test_mfkd 1
