@@ -31,7 +31,8 @@ void experiment_randomnns(
 			cout << "wt find nearest for " << tuple_string(target) << "\n";
 		}
 		datatype_t sdist;
-		nearest = kdtree->search_nearest(target, sdist);
+		int index;
+		nearest = kdtree->search_nearest(target, index, sdist);
 		if (MFKD_DEBUG) {
 			cout << "found nearest for " << tuple_string(target);
 			cout << ": " << sdist << " as ";
@@ -47,7 +48,8 @@ void experiment_inputnns(
 	for (unsigned int i = 0; i < points.size(); i++) {
 		tuple_t target = points[i];
 		datatype_t sdist;
-		nearest = kdtree->search_nearest(target, sdist);
+		int index;
+		nearest = kdtree->search_nearest(target, index, sdist);
 		assert(nearest != NULL);
 	}
 }
@@ -161,14 +163,14 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 	string filename(argv[1]);
-//	int dimension = atoi(argv[2]);
-//	int fanout = atoi(argv[3]);
+	int dimension = atoi(argv[2]);
+	int fanout = atoi(argv[3]);
 	cout << "build tree from " << filename << "\n";
-//	testSpeed(filename, dimension, fanout);
+	testSpeed(filename, dimension, fanout);
 	
 
 
-//	testInsertRemove();
-	testSingleAndMultDimension(filename);
+//  testInsertRemove();
+//	testSingleAndMultDimension(filename);
 	return 0;
 }

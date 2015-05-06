@@ -32,7 +32,8 @@ public:
 			config(config) {
 		nodesize = sizeof(csmfnode_t) +
 				sizeof(datatype_t) * config.dimension * (config.fanout - 1);
-	}
+	  assert(config.fanout >= 2);
+  }
 
 	~csmftree_t();
 
@@ -44,7 +45,8 @@ public:
 	void remove(csmfnode_t* node);
 
   // Search nearest neighbor
-	csmfnode_t* search_nearest(tuple_t& target, datatype_t& sdist) const;
+	csmfnode_t* search_nearest(
+			tuple_t& target, int& index, datatype_t& sdist) const;
 	
 	// Print the kd-tree
 	void display() const; 
@@ -89,7 +91,7 @@ private:
 	void display_helper(csmfnode_t* node, string label) const;
  	
 	csmfnode_t* search_nearest_helper(
-			csmfnode_t* starter, tuple_t& target, datatype_t& sdist) const;
+			csmfnode_t* starter, tuple_t& target, int& index, datatype_t& sdist) const;
 
 	// Helper function for destructor
 	void free_tree_helper(csmfnode_t* start);

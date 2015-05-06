@@ -18,8 +18,8 @@ int main(int argc, char** argv) {
 	cout << "build tree from " << filename << "\n";
 	int dimension = atoi(argv[2]);
 	int fanout = atoi(argv[3]);
-//	int range = atoi(argv[4]);
-//	int numsearches = atoi(argv[5]);
+	int range = atoi(argv[4]);
+	int numsearches = atoi(argv[5]);
 	vector<tuple_t> points = createTuplesFromFile(filename, dimension); 
 	
 	config_t kd_config(dimension, BY_PERCENTILE, 0, 2);
@@ -47,16 +47,16 @@ int main(int argc, char** argv) {
 	cout << "finished cache sensitive nary kd tree insert. Used ";
 	cout << difftime(tend, tstart) << "s\n";
 	
-/*	for (int i = 0; i < numsearches; i++) {
+	for (int i = 0; i < numsearches; i++) {
 		tuple_t target = generate_tuple(dimension, range);		
-		nearest = kd_tree.search_nearest(target);
+		kd_tree.search_nearest(target);
 	}
 	for (int i = 0; i < numsearches; i++) {
 		tuple_t target = generate_tuple(dimension, range);		
 		datatype_t sdist;
-		nearest = kdtree->search_nearest(target, sdist);
+		int index;
+		mfkd_tree.search_nearest(target, index, sdist);
 	}
-*/
 
 	return 0;
 }

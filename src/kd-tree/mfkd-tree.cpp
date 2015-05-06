@@ -96,8 +96,9 @@ void csmftree_t::display() const {
 	display_helper(root, "root<0>: ");
 }
 
-csmfnode_t* csmftree_t::search_nearest(tuple_t& target, datatype_t& sdist) const {
-	return search_nearest_helper(root, target, sdist);
+csmfnode_t* csmftree_t::search_nearest(
+		tuple_t& target, int& index, datatype_t& sdist) const {
+	return search_nearest_helper(root, target, index, sdist);
 }
 
 //===========================================================
@@ -136,7 +137,7 @@ void csmftree_t::free_children(csmfnode_t* parent) {
 
 void csmftree_t::free_tree_helper(csmfnode_t* start) {
 	if (start->num_children != 0) {
-		for (int i = 0; i < config.fanout; i++) {
+		for (int i = config.fanout - 1; i >= 0; i--) {
 			csmfnode_t* child = get_child(start, i);
 			free_tree_helper(child);
 		}
@@ -493,7 +494,7 @@ datatype_t smallest_distdiff_innode(
 }
 
 csmfnode_t* csmftree_t::search_nearest_helper(
-		csmfnode_t* starter, tuple_t& target, datatype_t& sdist) const {
+		csmfnode_t* starter, tuple_t& target, int& index, datatype_t& sdist) const {
 	if (starter == NULL) return NULL;
 	int willbe_child = 0;
 	csmfnode_t* cur_best = find_parent(starter, target, willbe_child);
@@ -510,10 +511,13 @@ csmfnode_t* csmftree_t::search_nearest_helper(
 			bool isnull = is_null(child);
 			if (isnull) continue;
 			datatype_t canddist;
-			csmfnode_t* candidate = search_nearest_helper(child, target, canddist);
+			int candindex;
+			csmfnode_t* candidate = search_nearest_helper(
+					child, target, candindex, canddist);
 			if (canddist < cur_dist) {
 				cur_best = candidate;
 				cur_dist = canddist;
+				index = candindex;
 			}
 		}
 	}
@@ -536,10 +540,13 @@ csmfnode_t* csmftree_t::search_nearest_helper(
 			datatype_t distbd = abs(target[axis] - key->values[childindex-1][axis]);
 			if (cur_dist > distbd) {
 				datatype_t canddist;
-				csmfnode_t* candidate = search_nearest_helper(probe, target, canddist);
+				int candindex;
+				csmfnode_t* candidate = search_nearest_helper(
+						probe, target, candindex, canddist);
 				if (canddist < cur_dist) {
 					cur_best = candidate;
 					cur_dist = canddist;
+					index = candindex;
 				}
 			} else {
 				break;
@@ -553,10 +560,13 @@ csmfnode_t* csmftree_t::search_nearest_helper(
 			datatype_t distbd = abs(target[axis] - key->values[childindex][axis]);
 			if (cur_dist > distbd) {
 				datatype_t canddist;
-				csmfnode_t* candidate = search_nearest_helper(probe, target, canddist);
+				int candindex;
+				csmfnode_t* candidate = search_nearest_helper(
+						probe, target, candindex, canddist);
 				if (canddist < cur_dist) {
 					cur_best = candidate;
 					cur_dist = canddist;
+					index = candindex;
 				}
 			} else {
 				break;
