@@ -1,0 +1,98 @@
+  ______     _______..______          .___________..______       _______  _______ 
+ /      |   /       ||   _  \     _   |           ||   _  \     |   ____||   ____|
+|  ,----'  |   (----`|  |_)  |  _| |_ `---|  |----`|  |_)  |    |  |__   |  |__   
+|  |        \   \    |   _  <  |_   _|    |  |     |      /     |   __|  |   __|  
+|  `----.----)   |   |  |_)  |   |_|      |  |     |  |\  \----.|  |____ |  |____ 
+ \______|_______/    |______/             |__|     | _| `._____||_______||_______|
+                                                                                  
+***********************************************************************************
+Cache Sensitive B+ Tree implementation by Harsha Yeddanapudy, William Truong, and
+Andrew Osgood. Guidance given by Sam Zhao and Stan Zdonik.
+
+***********************************************************************************
+					   STRAIGHT OUTTA PROVIDENCE (INTRO)
+***********************************************************************************
+For our final project in CS2270, we created a highly configurable, hybrid memory
+allocation capable CSB+ tree. We allow the user to change the internal and leaf 
+node sizes and also offer a variety of hybrid memory allocation policies. 
+
+***********************************************************************************
+								   CONFIG
+***********************************************************************************
+keysize -- number of keys to store in internal node
+leafsize -- number of keys to store in leaf node
+policy -- 
+	BY_HEIGHT: Allocates leaf nodes and two levels above it in DRAM
+		(works best for bulkload can produce unexpected results in insert)
+	BY_TIER_DRAM: Allocates leaf nodes in DRAM and alternates from there on
+	BY_TIER_NVM: Allocates leaf nodes in NVM and alternates from there on
+	DRAM: allocates everything in DRAM
+
+***********************************************************************************
+							   MAKE YOUR OWN POLICY
+***********************************************************************************
+Don't like our policies? Great! It's very easy to make your own! Currently, we
+base all of our policies on the global height or the given depth. If you'd like to
+add another policy then just add a case to the switch statement in shouldbe_imemory
+for your policy in csb-tree.cpp AND add your policy to config.hpp
+
+
+***********************************************************************************
+							   CHANGING NODE SIZES
+***********************************************************************************
+Want to change node sizes? Well because we're making a cache sensitive tree it's 
+slightly less convenient than we'd like; this is because memory allocation
+needs hard coded numbers to correctly allocate space. So if you want to change node
+sizes of internal and leaf nodes then:
+1. open csb-tree.hpp
+2. go to the commented section of structs titled "Other Node Configurations"
+3. uncomment the struct pair you prefer (they are clearly paired)
+4. comment the old pair of structs
+5. change the parameters for keysize and leafsize in your declarations of a csb tree
+
+That's it!
+
+***********************************************************************************
+								   STRUCTS
+***********************************************************************************
+LPair - holds key and tuple id
+
+CSBLNODE - leaf node, holds flag, pointers to other leaves, list of LPairs
+
+CSBINODE - internal node, holds point to first child, list of keys
+
+
+***********************************************************************************
+								  FUNCTIONS
+***********************************************************************************
+
+search -- Look for tuple id by key
+
+addChildtoRoot -- Naive tiling (preps tree for inserts and bulkload)
+
+bulkload -- Add many LPairs to the tree (builds from leaves up)
+
+insert -- insert one LPair into the tree
+
+csbdelete -- lazily deletes leaf from tree
+
+remove -- deletes node and frees memory
+
+isLeaf -- checks whether node is a leaf
+
+
+***********************************************************************************
+							   USING CSB+ TREE
+***********************************************************************************
+Follow these declarations:
+	config_t config(
+            keysize,leafsize, (make sure these match the numbers hard coded in 
+            					csb-tree.hpp)
+            policy); (specify your allocation policy here)
+
+    bp_t bp_tree(config);
+    bp_tree.addChildToRoot(bp_tree.g_root); (make sure to call addChildToRoot before
+    										  insert ONLY)
+
+    Now you can use our given functions to do whatever you'd like!
+
