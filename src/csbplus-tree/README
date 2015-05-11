@@ -40,15 +40,15 @@ for your policy in csb-tree.cpp AND add your policy to config.hpp
 ***********************************************************************************
 							   CHANGING NODE SIZES
 ***********************************************************************************
-Want to change node sizes? Well because we're making a cache sensitive tree it's 
+Want to change node sizes? Well because we're making a cache sensitive tree it's
 slightly less convenient than we'd like; this is because memory allocation
 needs hard coded numbers to correctly allocate space. So if you want to change node
 sizes of internal and leaf nodes then:
 1. open csb-tree.hpp
-2. go to the commented section of structs titled "Other Node Configurations"
-3. uncomment the struct pair you prefer (they are clearly paired)
-4. comment the old pair of structs
-5. change the parameters for keysize and leafsize in your declarations of a csb tree
+2. go to the struct definitions for CSBINODE/CSBLNODE
+3. look for the array size of each array within each node type
+4. to increase the leaf node by 64 bytes, add 8 to the array size (array size 4 = 64 bytes)
+5. to increase the internal node by 64 bytes, add 16 to the array ssize (array size 12 = 64 bytes)
 
 That's it!
 
