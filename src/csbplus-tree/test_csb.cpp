@@ -14,8 +14,7 @@ void testBulkload() {
 	assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
     config_t config(
             12.0,4.0,
-            BY_HEIGHT,
-            1.0);
+            BY_HEIGHT);
     bp_t bp_tree(config);
     bp_tree.addChildToRoot(bp_tree.g_root);
 
@@ -38,8 +37,7 @@ void testInsertRemove() {
   assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
   config_t config(
           12.0,4.0,
-          BY_HEIGHT,
-          1.0);
+          BY_HEIGHT);
   bp_t bp_tree(config);
   bp_tree.addChildToRoot(bp_tree.g_root);
   int tempKey;
@@ -74,8 +72,7 @@ void testGetHeight() {
   assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
   config_t config(
           12.0,4.0,
-          BY_HEIGHT,
-          1.0);
+          BY_HEIGHT);
   bp_t bp_tree(config);
   bp_tree.addChildToRoot(bp_tree.g_root);
   //bulkloaded in 100 nodes
@@ -92,8 +89,7 @@ void testBY_HEIGHTbulkload() {
   assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
   config_t config(
           12.0,4.0,
-          BY_HEIGHT,
-          1.0);
+          BY_HEIGHT);
   bp_t bp_tree(config);
 
   bp_t::LPair test[10000];
@@ -111,8 +107,7 @@ void testBY_TIER_DRAMbulkload() {
   assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
   config_t config(
           12.0,4.0,
-          BY_TIER_DRAM,
-          1.0);
+          BY_TIER_DRAM);
   bp_t bp_tree(config);
   bp_tree.addChildToRoot(bp_tree.g_root);
   bp_t::LPair test[10000];
@@ -130,8 +125,7 @@ void testBY_TIER_NVMbulkload() {
   assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
   config_t config(
           12.0,4.0,
-          BY_TIER_NVM,
-          1.0);
+          BY_TIER_NVM);
   bp_t bp_tree(config);
   bp_tree.addChildToRoot(bp_tree.g_root);
 
@@ -151,8 +145,7 @@ void testBY_HEIGHTinsert() {
   assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
   config_t config(
           12.0,4.0,
-          BY_HEIGHT,
-          1.0);
+          BY_HEIGHT);
   bp_t bp_tree(config);
   bp_tree.addChildToRoot(bp_tree.g_root);
 
@@ -175,8 +168,7 @@ void testBY_TIER_DRAMinsert() {
   assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
   config_t config(
           12.0,4.0,
-          BY_TIER_DRAM,
-          1.0);
+          BY_TIER_DRAM);
   bp_t bp_tree(config);
   bp_tree.addChildToRoot(bp_tree.g_root);
   int tempKey;
@@ -198,8 +190,7 @@ void testBY_TIER_NVMinsert() {
   assert(sizeof(bp_t::CSBLNODE) == sizeof(bp_t::CSBINODE));
   config_t config(
           12.0,4.0,
-          BY_TIER_NVM,
-          1.0);
+          BY_TIER_NVM);
   bp_t bp_tree(config);
   bp_tree.addChildToRoot(bp_tree.g_root);
 

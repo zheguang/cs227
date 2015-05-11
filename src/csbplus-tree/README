@@ -96,3 +96,11 @@ Follow these declarations:
 
     Now you can use our given functions to do whatever you'd like!
 
+***********************************************************************************
+							   COMPILING CSB+ TREE
+***********************************************************************************
+In terminal:
+
+make clean
+make csb
+./csb
